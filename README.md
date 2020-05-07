@@ -6,6 +6,6 @@ Latitude (°-coordinate degrees), Longitude (°-coordinate degrees), Depth (km),
 
 After this you can insert yout FMS list to be read by the python script using pandas dataframe function or any other method of your choice. The beachball list must be organized in this structure*: beachball list=[[R1, C1, NP1],[R2, C2, NP2],...,[Ri, Ci, NPi]] from i = 1 to n number of FMS, where Ri=Mw, Ci=[Xi,Yi,Zi], NPi=[Si, Di, Ri].
 
-*Note: It is not necessary to build the list with both nodal planes (NP) for each beachball as the programm plots the auxiliary plane given that this is always perpendicular to the one inserted of your choice.
+*Note: It is not necessary to build the list with both nodal planes (NP) for each beachball as the programm plots the auxiliary plane given that this is always perpendicular to the one inserted by you.
 
 You are set to go, run the script and verify that FMS are plotted with size relative to their magnitude, right polarity and accordingly to their position in space.
