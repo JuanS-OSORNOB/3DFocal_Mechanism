@@ -71,7 +71,7 @@ def plot_circle(radius, center, vecs, ax, scale_factors, fault_color = 'black', 
     ax.plot(x, y, z, color = auxiliary_color, linewidth = 2)
 
 def plot_vector(radius, center, vec, ax, scale_factors, color):
-    v = vec + center
+    v = vec * scale_factors
     ax.quiver(*center, *v, colors = color, length = radius)
 
 def vectors(angles, degrees = True):
@@ -359,7 +359,7 @@ def shorten_line(x, y, z, i, j, i2, j2):
     
 def plot_test():
 
-    data = [[1, [0, 0, 0], [0, 20, 45]]]
+    data = [[1, [2, 0, 0], [0, 20, 45]]]
     fig = plt.figure()
     ax = fig.add_subplot(111, projection = '3d')
     plot_focal_mechanisms(data, ax = ax, points = 20,
