@@ -3,7 +3,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.spatial.transform import Rotation
-from math import radians, sin, cos, isclose
+from math import radians, sin, cos, isclose, asin, atan2
 
 #command line arguments
 parser = argparse.ArgumentParser(description='Plot 3D focal mechanisms')
@@ -128,6 +128,15 @@ def vectors(angles, degrees = True):
     #normalize p and t so they have a length of 1
     p_vector = p_vector / np.linalg.norm(p_vector)
     t_vector = t_vector / np.linalg.norm(t_vector)
+
+    #check if null, p, and t are pointing downward. If not, reverse them.
+    if null_vector[2] > 0:
+        null_vector = null_vector * -1
+    if p_vector[2] > 0:
+        p_vector = p_vector * -1
+    if t_vector[2] > 0:
+        t_vector = t_vector * -1
+
     return {'strike': strike_vector,
             'dip' : dip_vector,
             'rake' : rake_vector,
@@ -135,6 +144,35 @@ def vectors(angles, degrees = True):
             'null': null_vector,
             'p': p_vector,
             't': t_vector}
+
+def vec_to_angles(vector):
+    '''takes an xyz vector and returns bearing (degrees clockwise from y axis) and
+    plunge (degrees below horizontal plane) angles.'''
+    
+    x, y, z = vector
+    mag = np.linalg.norm(vector)
+    bearing = atan2(x, y) * 180/np.pi
+    plunge = -asin(z/mag) * 180/np.pi
+
+    return bearing, plunge
+
+def print_vectors(vecs):
+    '''Takes a dict of xyz vectors, prints the vector type, xyz vector, and plunge/bearing format.'''
+
+    textstring = '{0}: <{1},{2},{3}>, bearing: {4} degrees, plunge: {5} degrees'
+
+    for v in vecs:
+        bearing, plunge = vec_to_angles(vecs[v])
+        #shorten to two decimal places
+        shortened = ['{:.2f}'.format(x) for x in [*vecs[v], bearing, plunge]]
+        print(textstring.format(v, *shortened))
+        
+        
+        
+        
+        
+    
+    
 
 def scale_beachballs(beachball_list, ax):
     '''plot everything else before running this function, or the axis limits
@@ -217,7 +255,8 @@ def plot_focal_mechanisms(data_list, ax = None, **kwargs):
     plt.legend()
 
 def focal_mechanism(radius, center, angles, ax, scale_factors, degrees = True, bottom_half = False,
-              alpha = .75, points = 20, plot_planes = True, vector_plots = [], vector_colors = []):
+                    alpha = .75, points = 20, plot_planes = True, vector_plots = [], vector_colors = [],
+                    print_vecs = False):
     '''radius determines the size of the beach ball, center is a list of x,y,z coordinates
     for the center of the beach ball, angles is a list of the strike, dip, and slip angles,
     scale_factors is a list of the proportions to scale the x, y, and z coordinates by to compensate
@@ -237,7 +276,6 @@ def focal_mechanism(radius, center, angles, ax, scale_factors, degrees = True, b
     for color, border in zip(colors, borders):
         #generate points for quarter-sphere
         u = np.linspace(border, border + np.pi/2, points)
-        print(u)
         x = np.outer(np.cos(u), np.sin(v))
         y = np.outer(np.sin(u), np.sin(v))
         z = np.outer(np.ones(np.size(u)), np.cos(v))
@@ -287,12 +325,16 @@ def focal_mechanism(radius, center, angles, ax, scale_factors, degrees = True, b
         
         ax.plot_surface(x, y, z, color=color, linewidth=0, alpha = alpha)
 
-        if plot_planes:
-            plot_circle(radius, center, vecs, ax, scale_factors, degrees = degrees)
+    if plot_planes:
+        plot_circle(radius, center, vecs, ax, scale_factors, degrees = degrees)
 
-        for vectype, c in zip(vector_plots, vector_colors):
-            vec = vecs[vectype]
-            plot_vector(radius, center, vec, ax, scale_factors, c)
+    for vectype, c in zip(vector_plots, vector_colors):
+        vec = vecs[vectype]
+        plot_vector(radius, center, vec, ax, scale_factors, c)
+
+    if print_vecs:
+        print('Strike: {} degrees, Dip: {} degrees, Rake: {} degrees'.format(*angles))
+        print_vectors(vecs)
             
 
         
@@ -316,13 +358,14 @@ def shorten_line(x, y, z, i, j, i2, j2):
     y[i, j] = y[i, j] - ydist
     
 def plot_test():
+
+    data = [[1, [0, 0, 0], [0, 20, 45]]]
     fig = plt.figure()
     ax = fig.add_subplot(111, projection = '3d')
-    legtext = 'Strike: {}\n, Dip: {}\n, Rake: {}\n'
-    data = [[1, [0, 0, 0], [0, 20, 45]]]
     plot_focal_mechanisms(data, ax = ax, points = 20,
                           vector_plots = ['strike', 'dip', 'rake', 'normal', 'null', 'p', 't']
-                          , vector_colors = ['blue', 'green', 'brown', 'black', 'purple', 'gray', 'red'])
+                          , vector_colors = ['blue', 'green', 'brown', 'black', 'purple', 'gray', 'red'],
+                          print_vecs = True)
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection = '3d')
@@ -331,7 +374,6 @@ def plot_test():
                           , vector_colors = ['blue', 'green', 'brown', 'black', 'purple', 'gray', 'red'],
                           bottom_half = True)
 
-##        ax.set_xlabel(legtext.format(*angles))
 
 
 
