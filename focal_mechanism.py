@@ -1,9 +1,19 @@
 import argparse
 import numpy as np
+import pandas as pd
+import os, sys
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.spatial.transform import Rotation
 from math import radians, sin, cos, isclose, asin, atan2
+
+def readingpath(path, file):
+    file=os.path.join(path, file)
+    if not os.path.isfile(file):
+        sys.exit('File(s) missing:'+file)
+    return file
+
+focalmechanismdir=readingpath('/home/juan/Caribe_2020', 'Soluciones MF 2020.xlsx')
 
 #command line arguments
 parser = argparse.ArgumentParser(description='Plot 3D focal mechanisms')
@@ -43,7 +53,7 @@ def plot_circle(radius, center, vecs, ax, scale_factors, fault_color = 'black', 
     strike = vecs['strike']
     dip = vecs['dip']
     normal = vecs['normal']
-    null = vecs['null']
+    null = vecs['B']
     u = np.linspace(0, 2*np.pi)
 
     #fault plane, defined by strike and dip vectors which are orthogonal and both in the plane
@@ -141,9 +151,9 @@ def vectors(angles, degrees = True):
             'dip' : dip_vector,
             'rake' : rake_vector,
             'normal' : normal_vector,
-            'null': null_vector,
-            'p': p_vector,
-            't': t_vector}
+            'B': null_vector,
+            'P': p_vector,
+            'T': t_vector}
 
 def vec_to_angles(vector):
     '''takes an xyz vector and returns bearing (degrees clockwise from y axis) and
@@ -154,18 +164,24 @@ def vec_to_angles(vector):
     bearing = atan2(x, y) * 180/np.pi
     plunge = -asin(z/mag) * 180/np.pi
 
+    if bearing<0:
+        bearing=360+bearing
     return bearing, plunge
 
 def print_vectors(vecs):
     '''Takes a dict of xyz vectors, prints the vector type, xyz vector, and plunge/bearing format.'''
 
-    textstring = '{0}: <{1},{2},{3}>, bearing: {4} degrees, plunge: {5} degrees'
-
+    textstring = '{0}: <{1},{2},{3}>, bearing: {4}°, plunge: {5}°'
+    #ARCHIVO=open('PRINT_VECS', 'w+')
     for v in vecs:
         bearing, plunge = vec_to_angles(vecs[v])
         #shorten to two decimal places
         shortened = ['{:.2f}'.format(x) for x in [*vecs[v], bearing, plunge]]
-        print(textstring.format(v, *shortened))
+        vecs_FM=textstring.format(v, *shortened)
+        #ARCHIVO.write(print_vecs_FM)
+        print(vecs_FM)
+    #ARCHIVO.close()
+    return bearing, plunge
         
         
         
@@ -270,8 +286,8 @@ def focal_mechanism(radius, center, angles, ax, scale_factors, degrees = True, b
     v = np.linspace(0, np.pi, points)
 
     vecs = vectors(angles)
-    p = vecs['p']
-    t = vecs['t']
+    p = vecs['P']
+    t = vecs['T']
 
     for color, border in zip(colors, borders):
         #generate points for quarter-sphere
@@ -333,7 +349,7 @@ def focal_mechanism(radius, center, angles, ax, scale_factors, degrees = True, b
         plot_vector(radius, center, vec, ax, scale_factors, c)
 
     if print_vecs:
-        print('Strike: {} degrees, Dip: {} degrees, Rake: {} degrees'.format(*angles))
+        print('Strike: {}°, Dip: {}°, Rake: {}°'.format(*angles))
         print_vectors(vecs)
             
 
@@ -357,33 +373,106 @@ def shorten_line(x, y, z, i, j, i2, j2):
     x[i, j] = x[i, j] - xdist
     y[i, j] = y[i, j] - ydist
     
-def plot_test():
-
-    data = [[1, [2, 0, 0], [0, 20, 45]]]
+def plot_test(test_data):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection = '3d')
     plot_focal_mechanisms(data, ax = ax, points = 20,
-                          vector_plots = ['strike', 'dip', 'rake', 'normal', 'null', 'p', 't']
+                          vector_plots = ['strike', 'dip', 'rake', 'normal', 'B', 'P', 'T']
                           , vector_colors = ['blue', 'green', 'brown', 'black', 'purple', 'gray', 'red'],
                           print_vecs = True)
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection = '3d')
+    ax.view_init(90,270)
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_xlim(-79, -70)
+    ax.set_ylim(7.5,14)
     plot_focal_mechanisms(data, ax = ax, points = 20,
-                          vector_plots = ['strike', 'dip', 'rake', 'normal', 'null', 'p', 't']
+                          vector_plots = ['strike', 'dip', 'rake', 'normal', 'B', 'P', 'T']
                           , vector_colors = ['blue', 'green', 'brown', 'black', 'purple', 'gray', 'red'],
                           bottom_half = True)
 
+#--------------------------------------------------------------------------------------------------------------------
+''' EXAMPLE: Importing an Excel FMS dataframe. Creating your beachball list. 
+And obtaining the axes' bearing and plunge values in order to plot them on a stereonet.'''
+mag_FM=[]
+center_FM=[]
+nodal_plane1=[]
+data_FM=pd.read_excel(focalmechanismdir, sheet_name='FMS')
+df_FM=pd.DataFrame(data_FM, columns=['Longitude (°)', 'Latitude (°)', 'Depth (km)', 'Magnitude (Mw)', 'Strike 1', 'Dip 1', 'Rake 1', 'Strike 2', 'Dip 2', 'Rake 2', 'Area', 'Date'])
+for i, row in df_FM.iterrows():
+        mag_FM.append(row['Magnitude (Mw)'])
+        x_FM=row['Longitude (°)']
+        y_FM=row['Latitude (°)']
+        z_FM=row['Depth (km)']*(-1)
+        s_FM=row['Strike 1']
+        d_FM=row['Dip 1']
+        r_FM=row['Rake 1']
+        center_FM.append([x_FM, y_FM, z_FM])
+        nodal_plane.append([s_FM, d_FM, r_FM])
+beachball_list=[]
+for i in range(0,len(mag_FM)):
+    beachball_list.append([mag_FM[i], center_FM[i], focal_plane[i]])
+print(beachball_list, len(beachball_list))
+test_data = beachball_list
+
+'''If you would like to use the second nodal plane it is also possible. 
+Whichever you use can yield the correct 3D and stereonet plots, as nodal planes are perpendicular.'''
+strike2=df_FM['Strike 2'].values.tolist()
+dip2=df_FM['Dip 2'].values.tolist()
+rake2=df_FM['Rake 2'].values.tolist()
+nodal_plane2=[]
+for i in range(0, len(strike2)):
+    nodal_plane2.append((strike1_d1[i], dip1_d1[i], rake1_d1[i]))
 
 
+def obtain_axes_list(plane):
+    bearing=[]
+    plunge=[]
+    index=0
+    for i in plane:
+        index+=1
+        vecs=vectors(i)
+        #print('Earthquake #',index)
+        for v in vecs:
+            bearing1, plunge1=vec_to_angles(vecs[v])
+            #print(bearing,plunge)
+            bearing.append(bearing1)
+            plunge.append(plunge1)
+    Strike=bearing[0::7]
+    Dip=plunge[1::7]
+    
+    b_bearing=bearing[4::7]
+    b_plunge=plunge[4::7]
+    
+    p_bearing=bearing[5::7]
+    p_plunge=plunge[5::7]
+    
+    t_bearing=bearing[6::7]
+    t_plunge=plunge[6::7]
+    print(Strike,len(Strike))
+    print(Dip, len(Dip))
+    #print(p_bearing, len(p_bearing))
+    return b_bearing, b_plunge, p_bearing, p_plunge, t_bearing, t_plunge
+
+b_bearing1, b_plunge1, p_bearing1, p_plunge1, t_bearing1, t_plunge1=obtain_axes_list(nodal_plane1)
+b_bearing2, b_plunge2, p_bearing2, p_plunge2, t_bearing2, t_plunge2=obtain_axes_list(nodal_plane2)
+
+'''Note: Area query in case it needs to be done'''
+AREA1_FM=df_FM[df_FM['Area'].eq('Area 1')]
+
+#--------------------------------------------------------------------------------------------------------------------
 
 if args.filename == None:
-    plot_test()
+    plot_test(test_data)
     plt.show()
+    plt.close('all')
 else:
     data = parse_file
     plot_focal_mechanisms(parse_file(args.filename, args.r))
     plt.show()
+    plt.close('all')
         
     
     
