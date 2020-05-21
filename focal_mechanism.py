@@ -406,7 +406,7 @@ for i, row in df_FM.iterrows():
 		d_FM=row['Dip 1']
 		r_FM=row['Rake 1']
 		center_FM.append([x_FM, y_FM, z_FM])
-		nodal_plane.append([s_FM, d_FM, r_FM])
+		nodal_plane1.append([s_FM, d_FM, r_FM])
 beachball_list=[]
 for i in range(0,len(mag_FM)):
 	beachball_list.append([mag_FM[i], center_FM[i], focal_plane[i]])
