@@ -409,7 +409,7 @@ for i, row in df_FM.iterrows():
 		nodal_plane1.append([s_FM, d_FM, r_FM])
 beachball_list=[]
 for i in range(0,len(mag_FM)):
-	beachball_list.append([mag_FM[i], center_FM[i], focal_plane[i]])
+	beachball_list.append([mag_FM[i], center_FM[i], nodal_plane1[i]])
 print(beachball_list, len(beachball_list))
 test_data = beachball_list
 
@@ -420,7 +420,7 @@ dip2=df_FM['Dip 2'].values.tolist()
 rake2=df_FM['Rake 2'].values.tolist()
 nodal_plane2=[]
 for i in range(0, len(strike2)):
-	nodal_plane2.append((strike1_d1[i], dip1_d1[i], rake1_d1[i]))
+	nodal_plane2.append((strike2[i], dip2[i], rake2[i]))
 
 
 def obtain_axes_list(plane):
