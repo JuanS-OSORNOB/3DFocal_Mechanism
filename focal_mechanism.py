@@ -171,7 +171,6 @@ def print_vectors(vecs):
 		shortened = ['{:.2f}'.format(x) for x in [*vecs[v], bearing, plunge]]
 		vecs_FM=textstring.format(v, *shortened)
 		print(vecs_FM)
-	return bearing, plunge
 
 def scale_beachballs(beachball_list, ax):
 	'''plot everything else before running this function, or the axis limits
@@ -319,8 +318,6 @@ def focal_mechanism(radius, center, angles, ax, scale_factors, degrees = True, b
 		x = x * radius * scale_factors[0] + center[0]
 		y = y * radius * scale_factors[1] + center[1]
 		z = z * radius * scale_factors[2] + center[2]
-
-
 		
 		ax.plot_surface(x, y, z, color=color, linewidth=0, alpha = alpha)
 
