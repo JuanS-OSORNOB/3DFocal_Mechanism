@@ -167,15 +167,12 @@ def print_vectors(vecs):
 	'''Takes a dict of xyz vectors, prints the vector type, xyz vector, and plunge/bearing format.'''
 
 	textstring = '{0}: <{1},{2},{3}>, bearing: {4}°, plunge: {5}°'
-	#ARCHIVO=open('PRINT_VECS', 'w+')
 	for v in vecs:
 		bearing, plunge = vec_to_angles(vecs[v])
 		#shorten to two decimal places
 		shortened = ['{:.2f}'.format(x) for x in [*vecs[v], bearing, plunge]]
 		vecs_FM=textstring.format(v, *shortened)
-		#ARCHIVO.write(print_vecs_FM)
 		print(vecs_FM)
-	#ARCHIVO.close()
 	return bearing, plunge
 
 def scale_beachballs(beachball_list, ax):
