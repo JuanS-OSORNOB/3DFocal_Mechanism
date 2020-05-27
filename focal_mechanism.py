@@ -71,8 +71,6 @@ def plot_circle(radius, center, vecs, ax, scale_factors, fault_color = 'black', 
 	y = y * radius * scale_factors[1] + center[1]
 	z = z * radius * scale_factors[2] + center[2]
 
-
-
 	ax.plot(x, y, z, color = auxiliary_color, linewidth = 2)
 
 def plot_vector(radius, center, vec, ax, scale_factors, color):
@@ -336,9 +334,6 @@ def focal_mechanism(radius, center, angles, ax, scale_factors, degrees = True, b
 	if print_vecs:
 		print('Strike: {}°, Dip: {}°, Rake: {}°'.format(*angles))
 		print_vectors(vecs)
-			
-
-		
 
 def shorten_line(x, y, z, i, j, i2, j2):
 	'''shorten line between <x[i,j], y[i,j], z[i,j]>
