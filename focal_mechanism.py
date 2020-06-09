@@ -251,7 +251,7 @@ def plot_focal_mechanisms(data_list, ax = None, **kwargs):
 		#make proxy legend
 		for label, color in zip(kwargs['vector_plots'], kwargs['vector_colors']):
 			ax.plot([], [], label = label, color = color)
-	plt.legend()
+                plt.legend()
 
 def focal_mechanism(radius, center, angles, ax, scale_factors, degrees = True, bottom_half = False,
 					alpha = .75, points = 20, plot_planes = True, vector_plots = [], vector_colors = [],
