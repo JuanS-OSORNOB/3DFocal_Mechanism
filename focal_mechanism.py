@@ -167,12 +167,6 @@ def print_vectors(vecs):
         shortened = ['{:.2f}'.format(x) for x in [*vecs[v], bearing, plunge]]
         print(textstring.format(v, *shortened))
         
-        
-        
-        
-        
-    
-    
 
 def scale_beachballs(beachball_list, ax):
     '''plot everything else before running this function, or the axis limits
@@ -252,7 +246,8 @@ def plot_focal_mechanisms(data_list, ax = None, **kwargs):
         #make proxy legend
         for label, color in zip(kwargs['vector_plots'], kwargs['vector_colors']):
             ax.plot([], [], label = label, color = color)
-    plt.legend()
+        #this might need to be outside the block if there are other reasons to have a legend
+        plt.legend()
 
 def focal_mechanism(radius, center, angles, ax, scale_factors, degrees = True, bottom_half = False,
                     alpha = .75, points = 20, plot_planes = True, vector_plots = [], vector_colors = [],
@@ -272,6 +267,8 @@ def focal_mechanism(radius, center, angles, ax, scale_factors, degrees = True, b
     vecs = vectors(angles)
     p = vecs['p']
     t = vecs['t']
+
+    all_coords = []
 
     for color, border in zip(colors, borders):
         #generate points for quarter-sphere
@@ -315,12 +312,13 @@ def focal_mechanism(radius, center, angles, ax, scale_factors, degrees = True, b
                       
             x[np.where(z > 0)] = np.nan
 
+        all_coords.append([x, y, z])
+
         #multiply by radius to resize, by scale_factors to compensate for axis size differences, and add center
         #coordinates to translate to the correct location
         x = x * radius * scale_factors[0] + center[0]
         y = y * radius * scale_factors[1] + center[1]
         z = z * radius * scale_factors[2] + center[2]
-
 
         
         ax.plot_surface(x, y, z, color=color, linewidth=0, alpha = alpha)
@@ -337,7 +335,7 @@ def focal_mechanism(radius, center, angles, ax, scale_factors, degrees = True, b
         print_vectors(vecs)
             
 
-        
+    return all_coords
 
 def shorten_line(x, y, z, i, j, i2, j2):
     '''shorten line between <x[i,j], y[i,j], z[i,j]>
@@ -373,17 +371,18 @@ def plot_test():
                           vector_plots = ['strike', 'dip', 'rake', 'normal', 'null', 'p', 't']
                           , vector_colors = ['blue', 'green', 'brown', 'black', 'purple', 'gray', 'red'],
                           bottom_half = True)
+               
+def main():
+    if args.filename == None:
+        plot_test()
+        plt.show()
+    else:
+        data = parse_file
+        plot_focal_mechanisms(parse_file(args.filename, args.r))
+        plt.show()
+if __name__== "__main__":
+    main()
 
-
-
-
-if args.filename == None:
-    plot_test()
-    plt.show()
-else:
-    data = parse_file
-    plot_focal_mechanisms(parse_file(args.filename, args.r))
-    plt.show()
         
     
     
