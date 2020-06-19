@@ -49,7 +49,6 @@ def circle_angle(axis1, axis2, vec):
     (i.e. axis2 is at pi/2 rather than 3pi/2).'''
     angle = angle_between(axis1, vec)
     chirality = angle_between(axis2, vec)
-    print(angle, chirality)
     if chirality > np.pi/2:
         return 2 * np.pi - angle
     return angle
@@ -136,10 +135,15 @@ def lambert(projection_point, new_y_axis, vecs):
     #make sure null is in near hemisphere
     if np.dot(null, projection_point) < 0: 
         null *= -1
-    fp_intersect_angle = angle_between(fp_int, null)
-    ap_intersect_angle = angle_between(ap_int, null)
 
-    print(ap_intersect_angle)
+    #use t-vector to determine which quadrants to fill
+    tension = vecs['T']
+    #make sure T is in near-hemisphere
+    if np.dot(tension, projection_point) < 0:
+        tension *= -1
+        
+    fp_intersect_angle = circle_angle(fp_int, fp_orth, null)
+    ap_intersect_angle = circle_angle(ap_int, ap_orth, null)
 
     fp_int_null_arc = np.array(circle_arc(fp_int, fp_orth, 0, fp_intersect_angle))
     null_neg_fp_int_null_arc = np.array(circle_arc(fp_int, fp_orth, fp_intersect_angle, np.pi))
@@ -211,7 +215,6 @@ def lambert(projection_point, new_y_axis, vecs):
 
     arc_set = [np.array(x) for x in arc_set]
     arc_set.append(shape1)
-    print(shape1.shape)
 
     coords = []
     for arc in arc_set:
@@ -321,11 +324,10 @@ end = (3, 30)
 width = 4
 depth = 100
 fig = plt.figure()
-ax = fig.add_subplot(projection = '3d')
+ax = fig.add_subplot(111, projection = '3d')
 corners, in_bounds, theta, centerx, centery, norm_vec = profile_view(data, *start, *end, width, depth)
 
 plot_focal_mechanisms(in_bounds, ax, alpha = 1)
-print(ax)
 ax.view_init(0, -theta*180/np.pi)
 scale_factors = scale_beachballs(in_bounds, ax)
 nv = np.array([norm_vec[0], norm_vec[1], 0])
