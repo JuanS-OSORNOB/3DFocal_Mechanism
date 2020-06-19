@@ -31,7 +31,7 @@ def circle_arc(axis1, axis2, start_angle, end_angle, points = 50):
     y = axis1[1] * np.cos(angle_points) + axis2[1] * np.sin(angle_points)
     z = axis1[2] * np.cos(angle_points) + axis2[2] * np.sin(angle_points)
 
-    return x, y, z
+    return np.array([x, y, z])
 
 def normalize_vector(vector):
     #cast to float
@@ -126,98 +126,59 @@ def lambert(projection_point, new_y_axis, vecs):
     #find intersection and orthogonal vector for auxiliary plane
     ap_int = np.cross(projection_point, vecs['rake'])
     ap_int = normalize_vector(ap_int)
+    #Check if ap_int is clockwise from fp_int (in other words, cross product of ap_int and fp_int should be toward viewer)
+    crossprod = np.cross(ap_int, fp_int)
+    if np.dot(crossprod, projection_point) < 0:
+        ap_int *= -1
     ap_orth = np.cross(vecs['rake'], ap_int)
     if np.dot(ap_orth, projection_point) < 0:
         ap_orth *= -1
     
-    #use null to determine intersection point
-    null = vecs['B']
-    #make sure null is in near hemisphere
-    if np.dot(null, projection_point) < 0: 
-        null *= -1
-
     #use t-vector to determine which quadrants to fill
     tension = vecs['T']
     #make sure T is in near-hemisphere
     if np.dot(tension, projection_point) < 0:
         tension *= -1
-        
-    fp_intersect_angle = circle_angle(fp_int, fp_orth, null)
-    ap_intersect_angle = circle_angle(ap_int, ap_orth, null)
 
-    fp_int_null_arc = np.array(circle_arc(fp_int, fp_orth, 0, fp_intersect_angle))
-    null_neg_fp_int_null_arc = np.array(circle_arc(fp_int, fp_orth, fp_intersect_angle, np.pi))
-
-    ap_int_null_arc = np.array(circle_arc(ap_int, ap_orth, 0, ap_intersect_angle))
-    null_neg_ap_int_arc = np.array(circle_arc(ap_int, ap_orth, ap_intersect_angle, np.pi))
-
+    #determine angle from new_y_axis that each intersection point is
     angles = [circle_angle(new_y_axis, new_x_axis, vec) for vec in [fp_int, ap_int, -fp_int, -ap_int]]
     fp_angle, ap_angle, neg_fp_angle, neg_ap_angle = angles
-    
-    #case1: ap_int is clockwise from fp_int (assuming new_y_axis at 12 and new_x_axis at 3)
-    #case2: ap_int is counterclockwise from fp_int
+              
+    #the quadrant that T is in can be determined by which of fp_int and negative fp_int it is closer to,
+    #and which of ap_int and negative ap_int it is closer to.
 
-    if fp_angle > ap_angle and fp_angle - ap_angle < np.pi:
-        '''case 2: shapes are:
-                ap -> fp -> intersection -> ap
-                fp -> -ap -> intersection -> fp
-                -ap -> -fp -> intersection -> -ap
-                -fp -> ap -> intersection -> -fp'''
-        arc = np.array(circle_arc(new_y_axis, new_x_axis, ap_angle, fp_angle))
-        shape1 = np.concatenate(arc, fp_int_null_arc, null_ap_int_arc)
-        shape2 = circle_arc(new_y_axis, new_x_axis, fp_angle, neg_ap_angle) + null_neg_ap_int_arc[::-1] + fp_int_null_arc[::-1]
-    
-                
-        
+    fp_ap = False
+    if angle_between(fp_int, tension) < angle_between(-fp_int, tension):
+        if angle_between(ap_int, tension) < angle_between(-ap_int, tension):
+            #tension is in fp-ap quadrant, so fp-ap quadrant and neg_fp-neg_ap quadrant are filled.
+            fp_ap = True
+        else:
+            #tension is in neg_ap-fp quadrant, so neg_ap-fp and ap-neg_fp quadrant are filled
+            fp_ap = False
+    elif angle_between(ap_int, tension) < angle_between(-ap_int, tension):
+        #tension is in ap-neg_fp quadrant, so neg_ap-fp and ap-neg_fp quadrant are filled
+        fp_ap = False
     else:
-        '''case1: shapes are:
-                fp -> ap -> intersection -> fp
-                ap -> -fp -> intersection -> ap
-                -fp -> -ap -> intersection -> -fp
-                -ap -> fp -> intersection -> -ap'''
-        arc = np.array(circle_arc(new_y_axis, new_x_axis, fp_angle, ap_angle))
-        shape1 = np.concatenate((arc, ap_int_null_arc, fp_int_null_arc[:, ::-1]), axis = 1)
-        
-    #shape1: from fp_int to intersection, from intersection to ap_int, from ap_int to fp_int
-##    fp_angle = angles[0]
-##    ap_angle = angles[1]
-##    arc1 = fp_int_null_arc
-##    arc2 = _ap_int_arc
-##    if fp_angle < ap_angle:
-##        arc3 =  circle_arc(new_y_axis, new_x_axis, fp_angle, ap_angle)
-##        arc1 = arc1[::-1]
-##        arc2 = arc2[::-1]
-##        arc3 = arc3[::-1]
-##    else:
-##        arc3 = circle_arc(new_y_axis, new_x_axis, ap_angle, fp_angle)
-        
-        
-        
-    #shape2: from -fp_int to intersection, from intersection to ap_int, from ap_int to -fp_int
-    #shape3: from fp_int to intersection, from intersection to -ap_int, from -ap_int to fp_int
-    #shape4: from -fp_int to intersection, from intersection to -ap_int, from -ap_int to -fp_int
+        #tension is in neg_fp-neg_ap quadrant, so fp-ap quadrant and neg_fp-neg_ap quadrant are filled.
+        fp_ap = True
 
-    
-    
-    arc_set = []
-    #outer circle
-    if angle_between(fp_int, ap_int) < np.pi:
-        angles = [circle_angle(new_y_axis, new_x_axis, vec) for vec in [fp_int, ap_int, -fp_int, -ap_int]]
+    fp_arc = circle_arc(fp_int, fp_orth, 0, np.pi)[:, ::-1]
+    ap_arc = circle_arc(ap_int, ap_orth, 0, np.pi)
+
+    arcs = []
+    if fp_ap:
+        arc1 = circle_arc(new_y_axis, new_x_axis, fp_angle, ap_angle)
+        arc2 = circle_arc(new_y_axis, new_x_axis, neg_fp_angle, neg_ap_angle)
+        filled_area = np.concatenate([arc1, ap_arc, fp_arc], axis = 1)
     else:
-        angles = [circle_angle(new_y_axis, vec) for vec in [fp_int, -ap_int, -fp_int, ap_int]]
-    for i in range(-1, len(angles) - 1):
-        arc_set.append(circle_arc(new_y_axis, new_x_axis, angles[i], angles[i + 1]))
+        arc1 = circle_arc(new_y_axis, new_x_axis, ap_angle, neg_fp_angle)
+        arc2 = circle_arc(new_y_axis, new_x_axis, neg_ap_angle, fp_angle)[:, ::-1]
+        filled_area = np.concatenate([arc1, fp_arc, arc2, ap_arc[:, ::-1]], axis = 1)
 
-    arc_set.append(circle_arc(fp_int, fp_orth, 0, fp_intersect_angle))
-    arc_set.append(circle_arc(fp_int, fp_orth, fp_intersect_angle, np.pi))
-    arc_set.append(circle_arc(ap_int, ap_orth, 0, ap_intersect_angle))
-    arc_set.append(circle_arc(ap_int, ap_orth, ap_intersect_angle, np.pi))
-
-    arc_set = [np.array(x) for x in arc_set]
-    arc_set.append(shape1)
+    outer_circle = circle_arc(new_y_axis, new_x_axis, 0, 2 * np.pi)
 
     coords = []
-    for arc in arc_set:
+    for arc in [outer_circle, filled_area]:
         coords.append(xyz_to_lambert(arc[0, :], arc[1, :], arc[2, :], projection_point, new_x_axis, new_y_axis))
 
 
@@ -336,18 +297,18 @@ nv = np.array([norm_vec[0], norm_vec[1], 0])
 for event in in_bounds:
     radius, center, angles = event
     vecs = vectors(event[2])
-    coords = lambert(nv, np.array([0, 0, 1]), vecs)
+    outer_circle, filled_shape = lambert(nv, np.array([0, 0, 1]), vecs)
 
     fig = plt.figure()
     ax = fig.add_subplot()
-    for xy_coords in coords:
+    for xy_coords in [outer_circle, filled_shape]:
         X = []
         Y = []
         for x, y in xy_coords:
             X.append(x)
             Y.append(y)
-        ax.plot(X, Y)
-    ax.fill(X, Y)
+        ax.plot(X, Y, color = 'black')
+    ax.fill(X, Y, color = 'red')
     ax.set_aspect('equal')
 plt.show()
 
