@@ -169,7 +169,7 @@ def lambert(projection_point, new_y_axis, vecs):
     if fp_ap:
         arc1 = circle_arc(new_y_axis, new_x_axis, fp_angle, ap_angle)
         arc2 = circle_arc(new_y_axis, new_x_axis, neg_fp_angle, neg_ap_angle)
-        filled_area = np.concatenate([arc1, ap_arc, fp_arc], axis = 1)
+        filled_area = np.concatenate([arc1, ap_arc, arc2[:, ::-1], fp_arc], axis = 1)
     else:
         arc1 = circle_arc(new_y_axis, new_x_axis, ap_angle, neg_fp_angle)
         arc2 = circle_arc(new_y_axis, new_x_axis, neg_ap_angle, fp_angle)[:, ::-1]
@@ -181,10 +181,7 @@ def lambert(projection_point, new_y_axis, vecs):
     for arc in [outer_circle, filled_area]:
         coords.append(xyz_to_lambert(arc[0, :], arc[1, :], arc[2, :], projection_point, new_x_axis, new_y_axis))
 
-
-
     return coords
-    
 
 def profile_view(data_list, x1, y1, x2, y2, width, depth):
     '''Quick and dirty function for looking at a slice from the side. Will
@@ -278,7 +275,7 @@ def profile_view(data_list, x1, y1, x2, y2, width, depth):
 
 data = [[1, [0, 0, 0], [20, 3, 45]],
         [3, [3, 5, -2], [40, 10, 60]],
-        [5, [1, 20, -4], [10, 30, 40]]]
+        [5, [1, 20, -4], [0, 90, 40]]]
 
 start = (0, 10)
 end = (3, 30)
@@ -297,18 +294,19 @@ nv = np.array([norm_vec[0], norm_vec[1], 0])
 for event in in_bounds:
     radius, center, angles = event
     vecs = vectors(event[2])
-    outer_circle, filled_shape = lambert(nv, np.array([0, 0, 1]), vecs)
+    coords = lambert(nv, np.array([0, 0, 1]), vecs)
 
     fig = plt.figure()
     ax = fig.add_subplot()
-    for xy_coords in [outer_circle, filled_shape]:
+        
+    for xy_coords in coords:
         X = []
         Y = []
         for x, y in xy_coords:
             X.append(x)
             Y.append(y)
         ax.plot(X, Y, color = 'black')
-    ax.fill(X, Y, color = 'red')
+    ax.fill(X, Y, color = 'red', zorder = 1)
     ax.set_aspect('equal')
 plt.show()
 
