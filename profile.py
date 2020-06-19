@@ -325,9 +325,12 @@ ax = fig.add_subplot(projection = '3d')
 corners, in_bounds, theta, centerx, centery, norm_vec = profile_view(data, *start, *end, width, depth)
 
 plot_focal_mechanisms(in_bounds, ax, alpha = 1)
+print(ax)
 ax.view_init(0, -theta*180/np.pi)
 scale_factors = scale_beachballs(in_bounds, ax)
 nv = np.array([norm_vec[0], norm_vec[1], 0])
+
+
 for event in in_bounds:
     radius, center, angles = event
     vecs = vectors(event[2])
