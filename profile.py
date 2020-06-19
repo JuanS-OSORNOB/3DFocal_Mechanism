@@ -342,6 +342,7 @@ for event in in_bounds:
             X.append(x)
             Y.append(y)
         ax.plot(X, Y)
+    ax.fill(X, Y)
     ax.set_aspect('equal')
 plt.show()
 
