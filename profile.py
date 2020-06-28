@@ -165,7 +165,6 @@ def lambert(projection_point, new_y_axis, vecs):
     fp_arc = circle_arc(fp_int, fp_orth, 0, np.pi)[:, ::-1]
     ap_arc = circle_arc(ap_int, ap_orth, 0, np.pi)
 
-    arcs = []
     if fp_ap:
         arc1 = circle_arc(new_y_axis, new_x_axis, fp_angle, ap_angle)
         arc2 = circle_arc(new_y_axis, new_x_axis, neg_fp_angle, neg_ap_angle)
@@ -183,31 +182,47 @@ def lambert(projection_point, new_y_axis, vecs):
 
     return coords
 
-def profile_view(data_list, x1, y1, x2, y2, width, depth):
-    '''Quick and dirty function for looking at a slice from the side. Will
-    improve later. (x1, y1) and (x2, y2) are points in the XY plane that
-    are the endpoints of a line down the center of the rectangle that is the
-    bounding box. Width is the width of that box, and depth is the depth of
-    the box.'''
+def profile_bounding_box(x1, y1, x2, y2, width):
+    '''This function characterizes the rectangle that is the upper face of the profile (see profile_view for more details about profiles).
+
+    This function returns the xy coordinates of the four corners and center of the rectangle, the vector pointing directly toward the viewer
+    (normal to the viewing plane), and the amount of rotation of the rectangle midline clockwise 
+    from the y-axis, in radians. The rotation angle doubles as the azimuthal viewing angle to be given to Matplotlib so that if a 3D 
+    plot of the profile is made, the viewer will be looking perpendicular to the line between (x1, y1) and (x2, y2).'''
+    
+    pass
+
+def bounding_box_corners():
+    pass
+
+def profile_view(x1, y1, x2, y2, width, depth):
+    '''A profile is a view of a slice of terrain and associated events. It consists of a right rectangular prism whose upper face is 
+    on the surface (at depth 0). The surface rectangle is defined by the variables x1, y1, x2, y2, and width. (x1, y1) and (x2, y2) are 
+    points on the surface (in the XY plane). The line segment from (x1, y1) to (x2, y2) is the midline of the surface rectangle, which therefore
+    has two parallel sides whose midpoints are (x1, y1) and (x2, y2) and whose length is 'width' units. The lower face of the prism is
+    'depth' units below the surface and has the same xy coordinates as the upper face. The view is perpendicular to this midline, so that 
+    the viewing plane has the left side corresponding to (x1, y1), the right side corresponding to (x2, y2), the bottom corresponding to (-depth) 
+    and the top corresponding to the surface. 
+    
+    [Describe what this function actually does]'''
 
 
 
-    #vector in direction of midline
+    #vector in direction of midline, from (x1, y1) to (x2, y2)
     vec1 = np.array([x2 - x1, y2 - y1, 0])
     #viewing plane is vertical so another vector is z unit vector
     vec2 = np.array([0, 0, 1])
-    #vector normal to both of these is normal to the plane
+    #vector normal to both of these is normal to the plane (points towards viewer)
     norm_vec = np.cross(vec1, vec2)
     #normal vector should be in XY plane, so
     assert(norm_vec[2] == 0)
     norm_vec = norm_vec / np.linalg.norm(norm_vec)
-    norm_vec = norm_vec[:2]
     
     #find limits of bounding box
-    corner1 = np.array([x1, y1]) - width/2 * norm_vec
-    corner2 = corner1 + width * norm_vec
-    corner3 = np.array([x2, y2]) + width/2 * norm_vec
-    corner4 = corner3 - width * norm_vec
+    corner1 = np.array([x1, y1, 0]) - width/2 * norm_vec #lower left corner after rotation
+    corner2 = corner1 + width * norm_vec #lower right corner after rotation
+    corner3 = np.array([x2, y2, 0]) + width/2 * norm_vec #upper right corner after rotation
+    corner4 = corner3 - width * norm_vec #upper left corner after rotation
     original_corners = (corner1, corner2, corner3, corner4)
     
     #find center of bounding box (midpoint of diagonal)
@@ -215,42 +230,19 @@ def profile_view(data_list, x1, y1, x2, y2, width, depth):
     centery = (corner1[1] + corner3[1]) / 2
     translate = np.array([centerx, centery])
 
-    #find rotation angle (negative because we want to reverse the angle)
+    #find rotation angle of normal vector clockwise from x-axis
     theta = -atan2(norm_vec[1], norm_vec[0])
     
     #recenter and rotate corners
-    corners = [translate_rotate_point(*corner, theta, translate) for corner in original_corners]
+    corners = [translate_rotate_point(corner[0], corner[1], theta, translate) for corner in original_corners]
     corner1, corner2, corner3, corner4 = corners
     #establish bounds
-    xmin = corner1[0]
-    if isclose(corner2[0], xmin):
-        #then corner1 and corner2 are on same vertical line
-        #therefore corner3 is on the other vertical line
-        xmax = corner3[0]
-        #corner4 should be on same vertical line as corner3
-        assert(isclose(xmax, corner4[0]))
-    else:
-        #then corner4 should be on same vertical line as corner1
-        assert(isclose(xmin, corner4[0]))
-        #and corner2 is on a different vertical line
-        xmax = corner2[0]
-        #and corner3 should be on the same vertical line as corner2
-        assert(isclose(xmax, corner3[0]))
-    if xmin > xmax:
-        #switch xmin and xmax if xmin is bigger
-        xmin, xmax = xmax, xmin
-    
-    #now do the same thing to find ymin and ymax
-    ymin = corner1[1]
-    if isclose(corner2[1], ymin):
-        ymax = corner3[1]
-        assert(isclose(ymax, corner4[1]))
-    else:
-        assert(isclose(ymin, corner4[1]))
-        ymax = corner2[1]
-        assert(isclose(ymax, corner3[1]))
-    if ymin > ymax:
-        ymin, ymax = ymax, ymin
+    xmin, ymin = corner1
+    xmax, ymax = corner3
+
+    assert(xmin <= xmax)
+    assert(ymin <= ymax)
+    assert(isclose(xmax - xmin, width))
 
     #the z-value of a focal mechanism is expected to be a negative number, so depth
     #should start at a negative number and go to 0
@@ -260,55 +252,105 @@ def profile_view(data_list, x1, y1, x2, y2, width, depth):
         depth *= -1
     zmin = depth
     zmax = 0
-    in_bounds = []
 
+    bounds = [xmin, xmax, ymin, ymax, zmin, zmax]
+
+    return original_corners, bounds, theta, translate, norm_vec
+
+def in_bounds(data_list, bounds, center, theta, rotated = True):
+    '''Determines if the center points in data_list are within the bounds of a 3D bounding box whose upper face has center at 'center',
+     whose y-axis is rotated theta radians clockwise from the absolute y-axis, and which has the bounds listed in 'bounds'.
+     
+     Returns a list of events from data_list that are within the bounding box. If rotated = False, returns the events as-is. If rotated
+     = True, repackages the event with the new x and y values. Lower rotated x-values will end up towards the back of the profile view;
+     lower rotated y-values will end up towards the left.'''
+
+    in_bounds_list = []
+
+    xmin, xmax, ymin, ymax, zmin, zmax = bounds
     for event in data_list:
         x, y, z = event[1]
-        newx, newy = translate_rotate_point(x, y, theta, translate)
+        newx, newy = translate_rotate_point(x, y, theta, center)
         if xmin <= newx <= xmax and ymin <= newy <= ymax and zmin <= z <= zmax:
-            in_bounds.append(event)
+            if rotated == True:
+                event = (newx, newy, event)
+            in_bounds_list.append(event)
+    return in_bounds_list
+
+def arrayize(points_list):
+    '''Turns a list or tuple of xy pairs or xyz triples into two or three arrays.'''
+    vecs = []
+    for v in zip(*points_list):
+        vecs.append(np.array(v))
+    return vecs
 
 
-    return original_corners, in_bounds, theta, centerx, centery, norm_vec
+def plot_lambert(ax, center, radius, scale_factors, zorder, *args):
+    zorder += 1
+    outer_circle, filled_area = lambert(*args)
+    X, Y = arrayize(outer_circle)
+    sc_x, sc_y = scale_factors
+    center_x, center_y = center
+    ax.plot(X * sc_x * radius + center_x, Y * sc_y * radius + center[1], color = 'black', zorder = zorder * 2) 
+    ax.fill(X * sc_x * radius + center_x, Y * sc_y * radius + center[1], color = 'white', zorder = zorder * 2 - 1)
+    X, Y = arrayize(filled_area) 
+    ax.plot(X * sc_x * radius + center_x, Y * sc_y * radius + center[1], color = 'black', zorder = zorder * 2) 
+    ax.fill(X * sc_x * radius + center_x, Y * sc_y * radius + center[1], color = 'red', zorder = zorder * 2 - 1)
+    
+
+def scale_factors_2d(ax):
+    ratio = ax.get_data_ratio()
+    if ratio < 1:
+        return (1, ratio)
+    return (1 / ratio, 1)
+
+def plot_profile(data_list, x1, y1, x2, y2, width, depth):
+    original_corners, bounds, theta, center, norm_vec = profile_view(x1, y1, x2, y2, width, depth)
+    in_bounds_list = in_bounds(data_list, bounds, center, theta)
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    _, _, ymin, ymax, zmin, zmax = bounds
+    ax.set_xlim(ymin, ymax)
+    ax.set_ylim(zmin, zmax)
+    in_bounds_list.sort() #first value was just for sorting back to front
+    scale_factors = scale_factors_2d(ax)
+    for i in range(len(in_bounds_list)):
+        _, x, event = in_bounds_list[i]
+        radius, center, angles = event
+        vecs = vectors(angles)
+        plot_lambert(ax, (x, center[2]), radius, scale_factors, i, norm_vec, np.array([0, 0, 1]), vecs)
+
+
+    
+    
 
 #EXAMPLE
 
-data = [[1, [0, 0, 0], [20, 3, 45]],
-        [3, [3, 5, -2], [40, 10, 60]],
-        [5, [1, 20, -4], [0, 90, 40]]]
 
-start = (0, 10)
-end = (3, 30)
-width = 4
-depth = 100
-fig = plt.figure()
-ax = fig.add_subplot(111, projection = '3d')
-corners, in_bounds, theta, centerx, centery, norm_vec = profile_view(data, *start, *end, width, depth)
+def main():
+    data = [[1, [0, 0, 0], [20, 3, 45]],
+            [3, [3, 5, -2], [40, 10, 60]],
+            [5, [2, 15, -10], [0, 34, 40]],
+            [5, [2.2, 16, -10], [0, 90, 40]],
+            [3, [1.5, 11, -20], [10, 40, 20]]]
 
-plot_focal_mechanisms(in_bounds, ax, alpha = 1)
-ax.view_init(0, -theta*180/np.pi)
-scale_factors = scale_beachballs(in_bounds, ax)
-nv = np.array([norm_vec[0], norm_vec[1], 0])
-
-
-for event in in_bounds:
-    radius, center, angles = event
-    vecs = vectors(event[2])
-    coords = lambert(nv, np.array([0, 0, 1]), vecs)
-
+    start = (0, 10)
+    end = (3, 30)
+    width = 4
+    depth = 100
     fig = plt.figure()
-    ax = fig.add_subplot()
-        
-    for xy_coords in coords:
-        X = []
-        Y = []
-        for x, y in xy_coords:
-            X.append(x)
-            Y.append(y)
-        ax.plot(X, Y, color = 'black')
-    ax.fill(X, Y, color = 'red', zorder = 1)
-    ax.set_aspect('equal')
-plt.show()
+    ax = fig.add_subplot(111, projection = '3d')
+    corners, bounds, theta, center, norm_vec = profile_view(*start, *end, width, depth)
+    in_bounds_list = in_bounds(data, bounds, center, theta, rotated = False)
+    norm_vec = np.array([norm_vec[0], norm_vec[1], 0])
+    plot_focal_mechanisms(in_bounds_list, ax, alpha = 1)
+    ax.view_init(0, -theta*180/np.pi)
+    _ = scale_beachballs(in_bounds_list, ax)
 
+    plot_profile(data, 0, 10, 3, 30, width, depth)
+    plt.show()
+
+if __name__ == '__main__':
+    main()
 
         
