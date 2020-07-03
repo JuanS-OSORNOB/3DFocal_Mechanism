@@ -3,9 +3,9 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 from math import isclose, atan2, cos, sin, sqrt
-import os
+import os, sys
 import pandas as pd
-
+from matplotlib.testing.compare import compare_images
 def readingfile(path, filename):
 	file=os.path.join(path, filename)
 	if not os.path.isfile(file):
@@ -332,6 +332,7 @@ def plot_profile(data_list, x1, y1, x2, y2, width, depth):
 		radius, center, angles = event
 		vecs = vectors(angles)
 		plot_lambert(ax, (x, center[2]), radius, scale_factors, i, norm_vec, np.array([0, 0, 1]), vecs)
+	return fig, ax
 
 def pltcolor(lst):
 	cols=[]
@@ -364,7 +365,7 @@ def pltsize(lst):
 			size.append(init**3.5)
 	return size
 
-def pointprofile(file, carpeta, sheets, columns, fignames, **kwargs):
+def pointprofile(fig, ax, file, carpeta, sheets, columns, fignames, **kwargs):
 	print('POINT PROFILES')
 	for i, sheet in enumerate(sheets):
 		data=pd.read_excel(file, sheet_name=sheet)
@@ -409,84 +410,68 @@ def main():
 			[5, [2.2, 16, -10], [0, 90, 40]],
 			[3, [1.5, 11, -20], [10, 40, 20]]]
 
-	start = (0, 10)
-	end = (3, 30)
+	
+	A = (0, 10)
+	Aprime = (3, 30)
 	width = 4
 	depth = 100
 	fig = plt.figure()
 	ax = fig.add_subplot(111, projection = '3d')
-	corners, bounds, theta, center, norm_vec = profile_view(*start, *end, width, depth)
+	corners, bounds, theta, center, norm_vec = profile_view(*A, *Aprime, width, depth)
 	in_bounds_list = in_bounds(data, bounds, center, theta, rotated = False)
 	norm_vec = np.array([norm_vec[0], norm_vec[1], 0])
-	plot_focal_mechanisms(in_bounds_list, ax, alpha = 1)
-	ax.view_init(0, -theta*180/np.pi)
-	_ = scale_beachballs(in_bounds_list, ax)
 
-	
-
-	x_A=start[0]
-	y_A=start[1]
-	x_Aprime=end[0]
-	y_Aprime=end[1]
-	plot_profile(data, x_A, y_A, x_Aprime, y_Aprime, width, depth)
+	x_A, y_A = A
+	x_Aprime, y_Aprime = Aprime
 	
 	ax.scatter(x_A, y_A, c='k')
 	ax.scatter(x_Aprime, y_Aprime, c='k')
 	ax.text(x_A, y_A, 0, 'A', size=15)
 	ax.text(x_Aprime, y_Aprime, 0, "A'", size=15)
-	x_0=x_Aprime-x_A
-	y_0=y_Aprime-y_A
-	D=sqrt((x_0)**2+(y_0)**2)
-	d=width/2
-	delta_x=d*(y_0/D)
-	delta_y=d*(x_0/D)
-	print(x_0, y_0, D, delta_x, delta_y)
-	v1=(x_A-delta_x, y_A+delta_y)
-	v2=(x_A+delta_x, y_A-delta_y)
-	v3=(x_Aprime-delta_x, y_Aprime+delta_y)
-	v4=(x_Aprime+delta_x, y_Aprime-delta_y)
-	ax.scatter(v1[0], v1[1], c='k')
-	ax.scatter(v2[0], v2[1], c='k')
-	ax.scatter(v3[0], v3[1], c='k')
-	ax.scatter(v4[0], v4[1], c='k')
-	ax.text(v1[0], v1[1], 0, 'V1', size=10)
-	ax.text(v2[0], v2[1], 0, 'V2', size=10)
-	ax.text(v3[0], v3[1], 0, 'V3', size=10)
-	ax.text(v4[0], v4[1], 0, 'V4', size=10)
+
+	#plot corner points -- corners have already been defined by the profile_view function
+	corner_labels = ['V1', 'V2', 'V4', 'V3']
+	for v, label in zip(corners, corner_labels):
+		ax.scatter(*v, c = 'k')
+		ax.text(*v, label, size = 10)
+
+	#plot line from A to Aprime
 	x_values=[x_A, x_Aprime]
 	y_values=[y_A, y_Aprime]
 	ax.plot(x_values, y_values, c='purple')
-	x_values_v=[v1[0], v2[0], v4[0], v3[0], v1[0]]
-	y_values_v=[v1[1], v2[1], v4[1], v3[1], v1[1]]
-	z_values=[-depth, -depth, -depth, -depth, -depth]
-	ax.plot(x_values_v, y_values_v, c='k', linestyle='dashed')
-	ax.plot(x_values_v, y_values_v, z_values, c='k', linestyle='dashed')
-	x_values_d1=[v1[0], v1[0]]
-	y_values_d1=[v1[1], v1[1]]
-	z_values_d1=[0, -depth]
-	ax.plot(x_values_d1, y_values_d1, z_values_d1, c='k', linestyle='dotted')
-	x_values_d2=[v2[0], v2[0]]
-	y_values_d2=[v2[1], v2[1]]
-	z_values_d2=[0, -depth]
-	ax.plot(x_values_d2, y_values_d2, z_values_d2, c='k', linestyle='dotted')
-	x_values_d3=[v3[0], v3[0]]
-	y_values_d3=[v3[1], v3[1]]
-	z_values_d3=[0, -depth]
-	ax.plot(x_values_d3, y_values_d3, z_values_d3, c='k', linestyle='dotted')
-	x_values_d4=[v4[0], v4[0]]
-	y_values_d4=[v4[1], v4[1]]
-	z_values_d4=[0, -depth]
-	ax.plot(x_values_d4, y_values_d4, z_values_d4, c='k', linestyle='dotted')
+	
+	#plot bounding box
 
+	#create lower corner coordinates by subtracting the depth from the z value
+	lower_corners = [v + np.array([0, 0, -depth]) for v in corners]
+
+	#plot vertical lines between pairs of upper and lower corners
+	for V_upper, V_lower in zip(corners, lower_corners):
+		ax.plot(*zip(V_upper, V_lower), c = 'k', linestyle = 'dotted')
+
+	#add first value of upper and lower rectangle to list so that the line forms a complete box
+	five_corners = list(corners) + [corners[0]]
+	five_lower_corners = lower_corners + [lower_corners[0]]
+
+	#plot upper and lower rectangles
+	ax.plot(*zip(*five_corners), c='k', linestyle='dashed')
+	ax.plot(*zip(*five_lower_corners), c='k', linestyle='dashed')
+
+	#plot the focal mechanisms inside the profile volume
+	plot_focal_mechanisms(in_bounds_list, ax, alpha = 1)
+	ax.view_init(0, -theta*180/np.pi)
+
+	#also plot the profile
+	fig2, ax2 = plot_profile(in_bounds_list, x_A, y_A, x_Aprime, y_Aprime, width, depth)
+	plt.show()
 	path1, file1=readingfile('/home/juan/Caribe_2020/Point Profiles/', 'Sismos_Perfiles_Tabla.xls')
 	directory1=os.path.join(path1, 'Figures')
 	carpeta1=createpath(directory1)
 	sheets1=['Sismos_PerfilAA_Tabla', 'Sismos_PerfilBB_Tabla', 'Sismos_PerfilCC_Tabla', 'Sismos_PerfilDD_Tabla', 'Sismos_PerfilEE_Tabla']
 	columns1=['x_km', 'pp', 'mag']
 	fignames1=['AA´', 'BB´', 'CC´', 'DD´', 'EE´']
-	pointprofile(file1, carpeta1, sheets1, columns1, fignames1, xlabel='label x', ylabel='label y')
+	pointprofile(fig2, ax2, file1, carpeta1, sheets1, columns1, fignames1, xlabel='label x', ylabel='label y')
 
-	plt.show()
 
 if __name__ == '__main__':
 	main()
