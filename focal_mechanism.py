@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.spatial.transform import Rotation
 from math import radians, sin, cos, isclose, asin, atan2
-from vector_math import circle_arc, vectors, fm_quadrant, fm_points
+from vector_math import circle_arc, vectors, fm_quadrant, fm_points, shorten_line
 
 #command line arguments
 parser = argparse.ArgumentParser(description='Plot 3D focal mechanisms')
@@ -169,7 +169,7 @@ def plot_focal_mechanisms(data_list, ax = None, **kwargs):
 		plt.legend()
 def focal_mechanism(radius, center, angles, ax, scale_factors, degrees = True, bottom_half = False,
 					alpha = .75, points = 20, plot_planes = True, vector_plots = [], vector_colors = [],
-					print_vecs = False):
+					print_vecs = False, shade = True):
 	'''radius determines the size of the beach ball, center is a list of x,y,z coordinates
 	for the center of the beach ball, angles is a list of the strike, dip, and slip angles,
 	scale_factors is a list of the proportions to scale the x, y, and z coordinates by to compensate
@@ -191,67 +191,6 @@ def focal_mechanism(radius, center, angles, ax, scale_factors, degrees = True, b
 	quads = fm_points(angles, degrees, points)
 	for color, quad in zip(colors, quads):
 		x, y, z = quad
-	# for color, border in zip(colors, borders):
-	# 	#generate points for quarter-sphere
-	# 	x, y, z = fm_quadrant(border, angles, degrees, points)
-	# 	u = np.linspace(border, border + np.pi/2, points)
-	# 	x = np.outer(np.cos(u), np.sin(v))
-	# 	y = np.outer(np.sin(u), np.sin(v))
-	# 	z = np.outer(np.ones(np.size(u)), np.cos(v))
-		
-	# 	#combine into coordinate matrix so rotation can be applied
-	# 	coordinate_matrix = np.array([x.flatten(), y.flatten(), z.flatten()]).T
-
-	# 	#apply rotations to matrix
-
-	# 	if degrees:
-	# 		offset = 90
-	# 	else:
-	# 		offset = np.pi / 2
-	# 	slip_rotation = Rotation.from_euler('x', angles[2], degrees = degrees)
-	# 	dip_rotation = Rotation.from_euler('y', angles[1] - offset, degrees = degrees)
-	# 	strike_rotation = Rotation.from_euler('z', -angles[0], degrees = degrees)
-	# 	slip_rotated = slip_rotation.apply(coordinate_matrix)
-	# 	dip_rotated = dip_rotation.apply(slip_rotated)
-	# 	strike_rotated = strike_rotation.apply(dip_rotated)
-
-
-
-
-	# 	#separate x, y, and z matrices
-	# 	x = strike_rotated[:, 0]
-	# 	y = strike_rotated[:, 1]
-	# 	z = strike_rotated[:, 2]
-
-	# 	#unflatten
-	# 	x = x.reshape(points, points)
-	# 	y = y.reshape(points, points)
-	# 	z = z.reshape(points, points)
-
-
-	# rake = np.array([vecs['rake']]).T
-	# normal = np.array([vecs['normal']]).T
-	# null = np.array([vecs['B']]).T
-
-	# colors = ['red', 'white', 'red', 'white']
-	# borders = [0, np.pi/2, np.pi, 3*np.pi/2]
-	# elevs = np.linspace(np.pi/2, -np.pi/2, points)
-	# for color, border in zip(colors, borders):
-	# 	azims = np.linspace(border + np.pi/2, border, points)
-	# 	X1 = []
-	# 	Y1 = []
-	# 	Z1 = []
-	# 	for azim in azims:
-	# 		x, y, z = (np.cos(azim) * rake + np.sin(azim) * normal) * np.cos(elevs) + np.sin(elevs)*null
-	# 		X1.append(x)
-	# 		Y1.append(y)
-	# 		Z1.append(z)
-	# 	X = np.array(X1)
-	# 	Y = np.array(Y1)
-	# 	Z = np.array(Z1)
-	# 	x = X
-	# 	y = Y
-	# 	z = Z
 
 
 		#remove the top half of the sphere
@@ -275,7 +214,7 @@ def focal_mechanism(radius, center, angles, ax, scale_factors, degrees = True, b
 		z = z * radius * scale_factors[2] + center[2]
 
 
-		ax.plot_surface(x, y, z, color=color, linewidth=0, alpha = alpha)
+		ax.plot_surface(x, y, z, color=color, linewidth=0, alpha = alpha, shade = shade)
 
 	if plot_planes:
 		plot_circle(radius, center, vecs, ax, scale_factors, degrees = degrees)
@@ -288,21 +227,5 @@ def focal_mechanism(radius, center, angles, ax, scale_factors, degrees = True, b
 		print('Strike: {}°, Dip: {}°, Rake: {}°'.format(*angles))
 		print_vectors(vecs)
 
-def shorten_line(x, y, z, i, j, i2, j2):
-	'''shorten line between <x[i,j], y[i,j], z[i,j]>
-	and <x[i2,j2], y[i2,j2], z[i2,j2]> so that the point above the xy
-	plane lies on it'''
-	if z[i, j] < 0:
-		#if z[i, j] is the smaller of the two, switch indices so it's larger
-		i, j, i2, j2 = i2, j2, i, j
-	#now <x[i,j], y[i,j], z[i,j]> is the point to be moved
 
-	#calculate fraction of line to remove in each dimension
-	zfrac = z[i, j] / (z[i, j] - z[i2, j2])
-	xdist = zfrac * (x[i, j] - x[i2, j2])
-	ydist = zfrac * (y[i, j] - y[i2, j2])
-
-	z[i, j] = 0
-	x[i, j] = x[i, j] - xdist
-	y[i, j] = y[i, j] - ydist
 

@@ -101,42 +101,6 @@ def vectors(angles, degrees = True):
 			'T': t_vector}
 
 def fm_quadrant(border, angles, degrees, points):
-    #generate points for quarter-sphere
-    v = np.linspace(0, np.pi, points)
-    u = np.linspace(border, border + np.pi/2, points)
-    x = np.outer(np.cos(u), np.sin(v))
-    y = np.outer(np.sin(u), np.sin(v))
-    z = np.outer(np.ones(np.size(u)), np.cos(v))
-    
-    #combine into coordinate matrix so rotation can be applied
-    coordinate_matrix = np.array([x.flatten(), y.flatten(), z.flatten()]).T
-
-    #apply rotations to matrix
-
-    if degrees:
-        offset = 90
-    else:
-        offset = np.pi / 2
-    slip_rotation = Rotation.from_euler('x', angles[2], degrees = degrees)
-    dip_rotation = Rotation.from_euler('y', angles[1] - offset, degrees = degrees)
-    strike_rotation = Rotation.from_euler('z', -angles[0], degrees = degrees)
-    slip_rotated = slip_rotation.apply(coordinate_matrix)
-    dip_rotated = dip_rotation.apply(slip_rotated)
-    strike_rotated = strike_rotation.apply(dip_rotated)
-
-
-
-
-    #separate x, y, and z matrices
-    x = strike_rotated[:, 0]
-    y = strike_rotated[:, 1]
-    z = strike_rotated[:, 2]
-
-    #unflatten
-    x = x.reshape(points, points)
-    y = y.reshape(points, points)
-    z = z.reshape(points, points)
-
     elevs = np.linspace(np.pi/2, -np.pi/2, points)
     azims = np.linspace(border + np.pi/2, border, points)
     vecs = vectors(angles, degrees = degrees)
@@ -154,56 +118,32 @@ def fm_quadrant(border, angles, degrees, points):
     X = np.array(X1)
     Y = np.array(Y1)
     Z = np.array(Z1)
-    x = np.flip(X, 0)
-    y = np.flip(np.flip(Y, 0), 1)
-    z = np.flip(np.flip(Z, 0), 1)
+    x = X
+    y = Y
+    z = Z
     return x, y, z
 
 def fm_points(angles, degrees, points):
-    borders = [0, np.pi / 2, np.pi, 3 * np.pi / 2]
-    quads = []
-    v = np.linspace(0, np.pi, points)
-    for border in borders:
-        #generate points for quarter-sphere
-        u = np.linspace(border, border + np.pi/2, points)
-        x = np.outer(np.cos(u), np.sin(v))
-        y = np.outer(np.sin(u), np.sin(v))
-        z = np.outer(np.ones(np.size(u)), np.cos(v))
-        
-        #combine into coordinate matrix so rotation can be applied
-        coordinate_matrix = np.array([x.flatten(), y.flatten(), z.flatten()]).T
-
-        #apply rotations to matrix
-
-        if degrees:
-            offset = 90
-        else:
-            offset = np.pi / 2
-        slip_rotation = Rotation.from_euler('x', angles[2], degrees = degrees)
-        dip_rotation = Rotation.from_euler('y', angles[1] - offset, degrees = degrees)
-        strike_rotation = Rotation.from_euler('z', -angles[0], degrees = degrees)
-        slip_rotated = slip_rotation.apply(coordinate_matrix)
-        dip_rotated = dip_rotation.apply(slip_rotated)
-        strike_rotated = strike_rotation.apply(dip_rotated)
-
-
-
-
-        #separate x, y, and z matrices
-        x = strike_rotated[:, 0]
-        y = strike_rotated[:, 1]
-        z = strike_rotated[:, 2]
-
-        #unflatten
-        x = x.reshape(points, points)
-        y = y.reshape(points, points)
-        z = z.reshape(points, points)
-        quads.append((x, y, z))
-    return quads
-
-def new_fm_points(angles, degrees, points):
-    borders = [0, 3* np.pi / 2, np.pi, np.pi / 2,]
+    borders = [0, np.pi / 2, np.pi, 3 * np.pi / 2,]
     quads = []
     for border in borders:
         quads.append(fm_quadrant(border, angles, degrees, points))
     return quads
+
+def shorten_line(x, y, z, i, j, i2, j2):
+	'''shorten line between <x[i,j], y[i,j], z[i,j]>
+	and <x[i2,j2], y[i2,j2], z[i2,j2]> so that the point above the xy
+	plane lies on it'''
+	if z[i, j] < 0:
+		#if z[i, j] is the smaller of the two, switch indices so it's larger
+		i, j, i2, j2 = i2, j2, i, j
+	#now <x[i,j], y[i,j], z[i,j]> is the point to be moved
+
+	#calculate fraction of line to remove in each dimension
+	zfrac = z[i, j] / (z[i, j] - z[i2, j2])
+	xdist = zfrac * (x[i, j] - x[i2, j2])
+	ydist = zfrac * (y[i, j] - y[i2, j2])
+
+	z[i, j] = 0
+	x[i, j] = x[i, j] - xdist
+	y[i, j] = y[i, j] - ydist
