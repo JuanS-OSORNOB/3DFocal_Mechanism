@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Last revised: 08/06/20
+# Last revised: 19/06/20
 # (c) <Juan Sebastián Osorno Bolívar & Amy Teegarden>
 import argparse
 import numpy as np
@@ -9,6 +9,7 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.spatial.transform import Rotation
 from math import radians, sin, cos, isclose, asin, atan2
+from vector_math import circle_arc, vectors, fm_quadrant, fm_points
 
 #command line arguments
 parser = argparse.ArgumentParser(description='Plot 3D focal mechanisms')
@@ -49,104 +50,18 @@ def plot_circle(radius, center, vecs, ax, scale_factors, fault_color = 'black', 
 	dip = vecs['dip']
 	normal = vecs['normal']
 	null = vecs['B']
-	u = np.linspace(0, 2*np.pi)
 
 	#fault plane, defined by strike and dip vectors which are orthogonal and both in the plane
-	x = strike[0] * np.cos(u) + dip[0] * np.sin(u)
-	y = strike[1] * np.cos(u) + dip[1] * np.sin(u)
-	z = strike[2] * np.cos(u) + dip[2] * np.sin(u)
-
-	x = x * radius * scale_factors[0] + center[0]
-	y = y * radius * scale_factors[1] + center[1]
-	z = z * radius * scale_factors[2] + center[2]
-
+	x, y, z = circle_arc(strike, dip, 0, 2 * np.pi, center, scale_factors, radius)
 	ax.plot(x, y, z, color = fault_color, linewidth = 2)
 	
 	#auxiliary plane, defined by normal and null vectors which are orthogonal and both in the plane
-	x = normal[0] * np.cos(u) + null[0] * np.sin(u)
-	y = normal[1] * np.cos(u) + null[1] * np.sin(u)
-	z = normal[2] * np.cos(u) + null[2] * np.sin(u)
-
-	x = x * radius * scale_factors[0] + center[0]
-	y = y * radius * scale_factors[1] + center[1]
-	z = z * radius * scale_factors[2] + center[2]
-
+	x, y, z = circle_arc(normal, null, 0, 2 * np.pi, center, scale_factors, radius)
 	ax.plot(x, y, z, color = auxiliary_color, linewidth = 2)
 
 def plot_vector(radius, center, vec, ax, scale_factors, color):
 	v = vec * scale_factors
 	ax.quiver(*center, *v, colors = color, length = radius)
-
-def vectors(angles, degrees = True):
-	if degrees:
-		strike, dip, rake = [radians(x) for x in angles]
-	else:
-		strike, dip, rake = angles
-
-	strike_vector = np.array([sin(strike),
-							  cos(strike),
-							  0])
-	dip_vector = np.array([cos(dip)*cos(strike),
-						   -cos(dip)*sin(strike),
-						   -sin(dip)])
-	rake_vector = np.array([cos(rake)*sin(strike) - sin(rake)*cos(dip)*cos(strike),
-							cos(rake)*cos(strike) + sin(rake)*cos(dip)*sin(strike),
-							sin(rake)*sin(dip)])
-	normal_vector = np.array([sin(dip)*cos(strike),
-							  -sin(dip)*sin(strike),
-							  cos(dip)])
-	null_vector = np.array([-sin(rake)*sin(strike) - cos(rake)*cos(dip)*cos(strike),
-							-sin(rake)*cos(strike) + cos(rake)*cos(dip)*sin(strike),
-							cos(rake)*sin(dip)])
-
-	p_vector = np.array([sin(dip)*cos(strike) - cos(rake)*sin(strike) + sin(rake)*cos(dip)*cos(strike),
-						 -sin(dip)*sin(strike) - cos(rake)*cos(strike) - sin(rake)*cos(dip)*sin(strike),
-						 cos(dip) - sin(rake)*sin(dip)])
-
-	t_vector = np.array([sin(dip)*cos(strike) + cos(rake)*sin(strike) - sin(rake)*cos(dip)*cos(strike),
-						 -sin(dip)*sin(strike) + cos(rake)*cos(strike) + sin(rake)*cos(dip)*sin(strike),
-						 cos(dip) + sin(rake)*sin(dip)])
-	#sanity checks
-
-	#normal vector should be the cross product of dip vector and strike vector
-	norm_correct = np.isclose(normal_vector, np.cross(dip_vector, strike_vector))   
-	assert(norm_correct.all())
-	
-	#rake vector should be cos(rake) * strike_vector - sin(rake) * dip_vector
-	rake_correct = np.isclose(rake_vector, cos(rake) * strike_vector - sin(rake) * dip_vector)                            
-	assert(rake_correct.all())
-	
-	#null vector should be the cross product of normal vector and rake vector
-	null_correct = np.isclose(null_vector, np.cross(normal_vector, rake_vector))
-	assert(null_correct.all())
-
-	#p should be normal - rake
-	p_correct = np.isclose(p_vector, normal_vector - rake_vector)
-	assert(p_correct.all())
-	
-	#t should be normal + rake
-	t_correct = np.isclose(t_vector, normal_vector + rake_vector)
-	assert(t_correct.all())
-
-	#normalize p and t so they have a length of 1
-	p_vector = p_vector / np.linalg.norm(p_vector)
-	t_vector = t_vector / np.linalg.norm(t_vector)
-
-	#check if null, p, and t are pointing downward. If not, reverse them.
-	if null_vector[2] > 0:
-		null_vector = null_vector * -1
-	if p_vector[2] > 0:
-		p_vector = p_vector * -1
-	if t_vector[2] > 0:
-		t_vector = t_vector * -1
-
-	return {'strike': strike_vector,
-			'dip' : dip_vector,
-			'rake' : rake_vector,
-			'normal' : normal_vector,
-			'B': null_vector,
-			'P': p_vector,
-			'T': t_vector}
 
 def vec_to_angles(vector):
 	'''takes an xyz vector and returns bearing (degrees clockwise from y axis) and
@@ -259,45 +174,85 @@ def focal_mechanism(radius, center, angles, ax, scale_factors, degrees = True, b
 	for the center of the beach ball, angles is a list of the strike, dip, and slip angles,
 	scale_factors is a list of the proportions to scale the x, y, and z coordinates by to compensate
 	for differences in the axes, and degrees is a flag that should be set to True if the strike, dip,
-	and slip angles are in degrees and False if they are in radians.'''
+	and slip angles are in degrees and False if they are in radians.
+	
+	Strike is 0 to 360 degrees. Dip is 0 to 90 degrees. Rake is between -180 and 180 degrees.
+	'''
 	
 	colors = ['red', 'white', 'red', 'white']
-	borders = [0, np.pi / 2, np.pi, np.pi * 3 / 2]
+	borders = [0, 3*np.pi / 2, np.pi, np.pi / 2]
 
 
 	v = np.linspace(0, np.pi, points)
 
-	vecs = vectors(angles)
+	vecs = vectors(angles, degrees = degrees)
 	p = vecs['P']
 	t = vecs['T']
-
-	for color, border in zip(colors, borders):
-		#generate points for quarter-sphere
-		u = np.linspace(border, border + np.pi/2, points)
-		x = np.outer(np.cos(u), np.sin(v))
-		y = np.outer(np.sin(u), np.sin(v))
-		z = np.outer(np.ones(np.size(u)), np.cos(v))
+	quads = fm_points(angles, degrees, points)
+	for color, quad in zip(colors, quads):
+		x, y, z = quad
+	# for color, border in zip(colors, borders):
+	# 	#generate points for quarter-sphere
+	# 	x, y, z = fm_quadrant(border, angles, degrees, points)
+	# 	u = np.linspace(border, border + np.pi/2, points)
+	# 	x = np.outer(np.cos(u), np.sin(v))
+	# 	y = np.outer(np.sin(u), np.sin(v))
+	# 	z = np.outer(np.ones(np.size(u)), np.cos(v))
 		
-		#combine into coordinate matrix so rotation can be applied
-		coordinate_matrix = np.array([x.flatten(), y.flatten(), z.flatten()]).T
+	# 	#combine into coordinate matrix so rotation can be applied
+	# 	coordinate_matrix = np.array([x.flatten(), y.flatten(), z.flatten()]).T
 
-		#apply rotations to matrix
-		slip_rotation = Rotation.from_euler('x', angles[2], degrees = degrees)
-		dip_rotation = Rotation.from_euler('y', angles[1] - 90, degrees = degrees)
-		strike_rotation = Rotation.from_euler('z', -angles[0], degrees = degrees)
-		slip_rotated = slip_rotation.apply(coordinate_matrix)
-		dip_rotated = dip_rotation.apply(slip_rotated)
-		strike_rotated = strike_rotation.apply(dip_rotated)
+	# 	#apply rotations to matrix
 
-		#separate x, y, and z matrices
-		x = strike_rotated[:, 0]
-		y = strike_rotated[:, 1]
-		z = strike_rotated[:, 2]
+	# 	if degrees:
+	# 		offset = 90
+	# 	else:
+	# 		offset = np.pi / 2
+	# 	slip_rotation = Rotation.from_euler('x', angles[2], degrees = degrees)
+	# 	dip_rotation = Rotation.from_euler('y', angles[1] - offset, degrees = degrees)
+	# 	strike_rotation = Rotation.from_euler('z', -angles[0], degrees = degrees)
+	# 	slip_rotated = slip_rotation.apply(coordinate_matrix)
+	# 	dip_rotated = dip_rotation.apply(slip_rotated)
+	# 	strike_rotated = strike_rotation.apply(dip_rotated)
 
-		#unflatten
-		x = x.reshape(points, points)
-		y = y.reshape(points, points)
-		z = z.reshape(points, points)
+
+
+
+	# 	#separate x, y, and z matrices
+	# 	x = strike_rotated[:, 0]
+	# 	y = strike_rotated[:, 1]
+	# 	z = strike_rotated[:, 2]
+
+	# 	#unflatten
+	# 	x = x.reshape(points, points)
+	# 	y = y.reshape(points, points)
+	# 	z = z.reshape(points, points)
+
+
+	# rake = np.array([vecs['rake']]).T
+	# normal = np.array([vecs['normal']]).T
+	# null = np.array([vecs['B']]).T
+
+	# colors = ['red', 'white', 'red', 'white']
+	# borders = [0, np.pi/2, np.pi, 3*np.pi/2]
+	# elevs = np.linspace(np.pi/2, -np.pi/2, points)
+	# for color, border in zip(colors, borders):
+	# 	azims = np.linspace(border + np.pi/2, border, points)
+	# 	X1 = []
+	# 	Y1 = []
+	# 	Z1 = []
+	# 	for azim in azims:
+	# 		x, y, z = (np.cos(azim) * rake + np.sin(azim) * normal) * np.cos(elevs) + np.sin(elevs)*null
+	# 		X1.append(x)
+	# 		Y1.append(y)
+	# 		Z1.append(z)
+	# 	X = np.array(X1)
+	# 	Y = np.array(Y1)
+	# 	Z = np.array(Z1)
+	# 	x = X
+	# 	y = Y
+	# 	z = Z
+
 
 		#remove the top half of the sphere
 		if bottom_half:
