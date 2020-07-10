@@ -7,7 +7,6 @@ import pandas as pd
 import os, sys
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from scipy.spatial.transform import Rotation
 from math import radians, sin, cos, isclose, asin, atan2
 from vector_math import circle_arc, vectors, fm_quadrant, fm_points, shorten_line
 

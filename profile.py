@@ -289,7 +289,6 @@ def in_bounds(data_list, bounds, center, theta, rotated = True):
 				event = (newx, newy, event)
 			in_bounds_list.append(event)
 	return in_bounds_list
-
 def arrayize(points_list):
 	'''Turns a list or tuple of xy pairs or xyz triples into two or three arrays.'''
 	vecs = []
@@ -323,7 +322,7 @@ def plot_profile(data_list, x1, y1, x2, y2, width, depth):
 	fig = plt.figure()
 	ax = fig.add_subplot(111)
 	_, _, ymin, ymax, zmin, zmax = bounds
-	ax.set_xlim(ymin, ymax)
+	ax.set_xlim(0, ymax - ymin)
 	ax.set_ylim(zmin, zmax)
 	in_bounds_list.sort() #first value was just for sorting back to front
 	scale_factors = scale_factors_2d(ax)
@@ -331,7 +330,7 @@ def plot_profile(data_list, x1, y1, x2, y2, width, depth):
 		_, x, event = in_bounds_list[i]
 		radius, center, angles = event
 		vecs = vectors(angles)
-		plot_lambert(ax, (x, center[2]), radius, scale_factors, i, norm_vec, np.array([0, 0, 1]), vecs)
+		plot_lambert(ax, (x - ymin, center[2]), radius, scale_factors, i, norm_vec, np.array([0, 0, 1]), vecs)
 	return fig, ax
 
 def pltcolor(lst):
