@@ -6,8 +6,9 @@ from math import isclose, atan2, cos, sin, sqrt
 import os, sys
 import pandas as pd
 from matplotlib.testing.compare import compare_images
-def readingfile(path, filename):
-	file=os.path.join(path, filename)
+
+def readingfile(path, file):
+	file=os.path.join(path, file)
 	if not os.path.isfile(file):
 		sys.exit('File(s) missing:'+file)
 	return path, file
@@ -18,7 +19,7 @@ def createpath(directory):
 	return directory
 
 def translate_rotate_point(x, y, angle, center):
-	'''Move a point (x, y) so that the new point is the same with respect
+	'''Moves a point (x, y) so that the new point is the same with respect
 	to the origin as the point (x, y) was with respect to the point 'center'.
 	Then rotate the new point around the origin by 'angle', counterclockwise from the
 	x-axis.'''
@@ -195,19 +196,6 @@ def lambert(projection_point, new_y_axis, vecs):
 
 	return coords
 
-def profile_bounding_box(x1, y1, x2, y2, width):
-	'''This function characterizes the rectangle that is the upper face of the profile (see profile_view for more details about profiles).
-
-	This function returns the xy coordinates of the four corners and center of the rectangle, the vector pointing directly toward the viewer
-	(normal to the viewing plane), and the amount of rotation of the rectangle midline clockwise 
-	from the y-axis, in radians. The rotation angle doubles as the azimuthal viewing angle to be given to Matplotlib so that if a 3D 
-	plot of the profile is made, the viewer will be looking perpendicular to the line between (x1, y1) and (x2, y2).'''
-	
-	pass
-
-def bounding_box_corners():
-	pass
-
 def profile_view(x1, y1, x2, y2, width, depth):
 	'''A profile is a view of a slice of terrain and associated events. It consists of a right rectangular prism whose upper face is 
 	on the surface (at depth 0). The surface rectangle is defined by the variables x1, y1, x2, y2, and width. (x1, y1) and (x2, y2) are 
@@ -270,6 +258,39 @@ def profile_view(x1, y1, x2, y2, width, depth):
 
 	return original_corners, bounds, theta, translate, norm_vec
 
+def plot_bounding_box(ax, A, Aprime, corners, depth):
+	'''Plots the profile bounding box in 3D (see profile_view for more details about profiles).'''
+	x_A, y_A = A
+	x_Aprime, y_Aprime = Aprime
+	x_values=[x_A, x_Aprime]
+	y_values=[y_A, y_Aprime]
+	ax.plot(x_values, y_values, c='purple')
+	ax.scatter(x_A, y_A, c='k')
+	ax.scatter(x_Aprime, y_Aprime, c='k')
+	ax.text(x_A, y_A, 0, 'A', size=15)
+	ax.text(x_Aprime, y_Aprime, 0, "A'", size=15)
+
+	corner_labels = ['V1', 'V2', 'V4', 'V3']
+	for v, label in zip(corners, corner_labels):
+		ax.scatter(*v, c = 'k')
+		ax.text(*v, label, size = 10)
+	
+	#create lower corner coordinates by subtracting the depth from the z value
+	lower_corners = [v + np.array([0, 0, -depth]) for v in corners]
+
+	#plot vertical lines between pairs of upper and lower corners
+	for V_upper, V_lower in zip(corners, lower_corners):
+		ax.plot(*zip(V_upper, V_lower), c = 'k', linestyle = 'dotted')
+
+	#add first value of upper and lower rectangle to list so that the line forms a complete box
+	five_corners = list(corners) + [corners[0]]
+	five_lower_corners = lower_corners + [lower_corners[0]]
+
+	#plot upper and lower rectangle
+	ax.plot(*zip(*five_corners), c='k', linestyle='dashed')
+	ax.plot(*zip(*five_lower_corners), c='k', linestyle='dashed')
+	return x_A, y_A, x_Aprime, y_Aprime
+
 def in_bounds(data_list, bounds, center, theta, rotated = True):
 	'''Determines if the center points in data_list are within the bounds of a 3D bounding box whose upper face has center at 'center',
 	 whose y-axis is rotated theta radians clockwise from the absolute y-axis, and which has the bounds listed in 'bounds'.
@@ -289,13 +310,13 @@ def in_bounds(data_list, bounds, center, theta, rotated = True):
 				event = (newx, newy, event)
 			in_bounds_list.append(event)
 	return in_bounds_list
+
 def arrayize(points_list):
 	'''Turns a list or tuple of xy pairs or xyz triples into two or three arrays.'''
 	vecs = []
 	for v in zip(*points_list):
 		vecs.append(np.array(v))
 	return vecs
-
 
 def plot_lambert(ax, center, radius, scale_factors, zorder, *args):
 	zorder += 1
@@ -308,30 +329,12 @@ def plot_lambert(ax, center, radius, scale_factors, zorder, *args):
 	X, Y = arrayize(filled_area) 
 	ax.plot(X * sc_x * radius + center_x, Y * sc_y * radius + center[1], color = 'black', zorder = zorder * 2) 
 	ax.fill(X * sc_x * radius + center_x, Y * sc_y * radius + center[1], color = 'red', zorder = zorder * 2 - 1)
-	
 
 def scale_factors_2d(ax):
 	ratio = ax.get_data_ratio()
 	if ratio < 1:
 		return (1, ratio)
 	return (1 / ratio, 1)
-
-def plot_profile(data_list, x1, y1, x2, y2, width, depth):
-	original_corners, bounds, theta, center, norm_vec = profile_view(x1, y1, x2, y2, width, depth)
-	in_bounds_list = in_bounds(data_list, bounds, center, theta)
-	fig = plt.figure()
-	ax = fig.add_subplot(111)
-	_, _, ymin, ymax, zmin, zmax = bounds
-	ax.set_xlim(0, ymax - ymin)
-	ax.set_ylim(zmin, zmax)
-	in_bounds_list.sort() #first value was just for sorting back to front
-	scale_factors = scale_factors_2d(ax)
-	for i in range(len(in_bounds_list)):
-		_, x, event = in_bounds_list[i]
-		radius, center, angles = event
-		vecs = vectors(angles)
-		plot_lambert(ax, (x - ymin, center[2]), radius, scale_factors, i, norm_vec, np.array([0, 0, 1]), vecs)
-	return fig, ax
 
 def pltcolor(lst):
 	cols=[]
@@ -364,113 +367,158 @@ def pltsize(lst):
 			size.append(init**3.5)
 	return size
 
-def pointprofile(fig, ax, file, carpeta, sheets, columns, fignames, **kwargs):
-	print('POINT PROFILES')
-	for i, sheet in enumerate(sheets):
-		data=pd.read_excel(file, sheet_name=sheet)
-		df=pd.DataFrame(data, columns=columns)
-		m=df[columns[0]].values.tolist()
-		PP=df[columns[1]].values.tolist()
-		mag=df[columns[2]].values.tolist()
-		min_m=min(m)
-		max_m=max(m)
-		min_PP=min(PP)
-		max_PP=max(PP)
-		fig=plt.figure(dpi=220, tight_layout=False)
-		ax=fig.add_subplot(111)
-		figname=fignames[i]
-		ax.set_title('{}'.format(figname))
-		ax.set_aspect('equal')
-		if 'xlabel' in kwargs:
-			ax.set_xlabel(kwargs['xlabel'], fontsize=8)
-		if 'ylabel' in kwargs:	
-			ax.set_ylabel(kwargs['ylabel'], fontsize=8)
-		cols=pltcolor(PP)
-		size=pltsize(mag)
-		plt.scatter(m, PP, c=cols, marker='.', s=size)
-		plt.grid(which='major', axis='x', linestyle='--', alpha=0.5)
-		plt.show()
-		os.chdir(carpeta)
-		fig.savefig('{}'.format(sheet))
-		plt.close('all')
-	print('Find figures at', carpeta)
+def plot_profile(FM_data_list, events_list, x1, y1, x2, y2, width, depth, depth_mag=True, **kwargs):
+	#Beachball projection
+	original_corners, bounds, theta, center, norm_vec = profile_view(x1, y1, x2, y2, width, depth)
+	in_bounds_list = in_bounds(FM_data_list, bounds, center, theta)
+	print('Total FM in bounds:', len(in_bounds_list))
+	fig=plt.figure(dpi=220, tight_layout=True)
+	ax=fig.add_subplot(111)
+	plt.grid(which='major', axis='x', linestyle='--', alpha=0.5)
+	xmin, xmax, ymin, ymax, zmin, zmax = bounds
+	ax.set_xlim(0, ymax-ymin)
+	ax.set_ylim(zmin, zmax)
+	ax.set_xlabel('Relative profile distance (km)')
+	ax.set_ylabel('Depth (km)')
+	if 'Title' in kwargs:
+		ax.set_title(kwargs['Title'], fontsize=13)
+	in_bounds_list.sort() #first value was just for sorting back to front
+	scale_factors = scale_factors_2d(ax)
+	for i in range(len(in_bounds_list)):
+		_, x, event = in_bounds_list[i]
+		radius, center, angles = event
+		vecs = vectors(angles)
+		plot_lambert(ax, (x-ymin, center[2]), radius, scale_factors, i, norm_vec, np.array([0, 0, 1]), vecs)
 
+	#Point profile
+	Event_list=in_bounds(events_list, bounds, center, theta)
+	print('Total events:', len(events_list), '\nTotal events in bounds:', len(Event_list))
+	depth_list, mag_list=[], []
+	for i in range(0, len(Event_list)):
+		newx, newy, event=Event_list[i]
+		mag, center=event
+		lon,lat, depth=center
+		depth_list.append(depth)
+		mag_list.append(mag)
 
-	
-	
-
-#EXAMPLE
-
-
-def main():
-	data = [[1, [0, 0, 0], [20, 3, 45]],
-			[3, [3, 5, -2], [40, 10, 60]],
-			[5, [2, 15, -10], [0, 34, 40]],
-			[5, [2.2, 16, -10], [0, 90, 40]],
-			[3, [1.5, 11, -20], [10, 40, 20]]]
-
-	
-	A = (0, 10)
-	Aprime = (3, 30)
-	width = 4
-	depth = 100
-	fig = plt.figure()
-	ax = fig.add_subplot(111, projection = '3d')
-	corners, bounds, theta, center, norm_vec = profile_view(*A, *Aprime, width, depth)
-	in_bounds_list = in_bounds(data, bounds, center, theta, rotated = False)
-	norm_vec = np.array([norm_vec[0], norm_vec[1], 0])
-
-	x_A, y_A = A
-	x_Aprime, y_Aprime = Aprime
-	
-	ax.scatter(x_A, y_A, c='k')
-	ax.scatter(x_Aprime, y_Aprime, c='k')
-	ax.text(x_A, y_A, 0, 'A', size=15)
-	ax.text(x_Aprime, y_Aprime, 0, "A'", size=15)
-
-	#plot corner points -- corners have already been defined by the profile_view function
-	corner_labels = ['V1', 'V2', 'V4', 'V3']
-	for v, label in zip(corners, corner_labels):
-		ax.scatter(*v, c = 'k')
-		ax.text(*v, label, size = 10)
-
-	#plot line from A to Aprime
-	x_values=[x_A, x_Aprime]
-	y_values=[y_A, y_Aprime]
-	ax.plot(x_values, y_values, c='purple')
-	
-	#plot bounding box
-
-	#create lower corner coordinates by subtracting the depth from the z value
-	lower_corners = [v + np.array([0, 0, -depth]) for v in corners]
-
-	#plot vertical lines between pairs of upper and lower corners
-	for V_upper, V_lower in zip(corners, lower_corners):
-		ax.plot(*zip(V_upper, V_lower), c = 'k', linestyle = 'dotted')
-
-	#add first value of upper and lower rectangle to list so that the line forms a complete box
-	five_corners = list(corners) + [corners[0]]
-	five_lower_corners = lower_corners + [lower_corners[0]]
-
-	#plot upper and lower rectangles
-	ax.plot(*zip(*five_corners), c='k', linestyle='dashed')
-	ax.plot(*zip(*five_lower_corners), c='k', linestyle='dashed')
-
-	#plot the focal mechanisms inside the profile volume
-	plot_focal_mechanisms(in_bounds_list, ax, alpha = 1)
-	ax.view_init(0, -theta*180/np.pi)
-
-	#also plot the profile
-	fig2, ax2 = plot_profile(in_bounds_list, x_A, y_A, x_Aprime, y_Aprime, width, depth)
+	for i in range(0, len(Event_list)):
+		newx, newy, event=Event_list[i]
+		mag, center=event
+		lon, lat, depth=center
+		cols=pltcolor(depth_list)
+		size=pltsize(mag_list)
+		if depth_mag:
+			ax.scatter(newy-ymin, depth, c=cols[i], s=size[i])
+		else:
+			ax.scatter(newy-ymin, depth, c='b', s=8)
+	#ax.set_aspect('equal')#---> Figure out how to set x and y values in km to set an equal aspect ratio
+	fig.canvas.draw()
+	tick_xlabels=[item.get_text() for item in ax.get_xticklabels()]
+	km_list_label=[]
+	for degree in tick_xlabels:
+		km=int(float(degree)*111)
+		km_list_label.append(km)
+	ax.set_xticklabels(km_list_label)
 	plt.show()
-	path1, file1=readingfile('/home/juan/Caribe_2020/Point Profiles/', 'Sismos_Perfiles_Tabla.xls')
-	directory1=os.path.join(path1, 'Figures')
-	carpeta1=createpath(directory1)
-	sheets1=['Sismos_PerfilAA_Tabla', 'Sismos_PerfilBB_Tabla', 'Sismos_PerfilCC_Tabla', 'Sismos_PerfilDD_Tabla', 'Sismos_PerfilEE_Tabla']
-	columns1=['x_km', 'pp', 'mag']
-	fignames1=['AA´', 'BB´', 'CC´', 'DD´', 'EE´']
-	pointprofile(fig2, ax2, file1, carpeta1, sheets1, columns1, fignames1, xlabel='label x', ylabel='label y')
+	plt.close('all')
+	if 'Figurename' in kwargs:
+		os.chdir(graphdir)
+		fig.savefig(kwargs['Figurename'], dpi=220)
 
+def example(depth_mag=True):
+	'''Example function. It plots the 3D FMS and events inside the bounding box of the profile chosen.
+	depth_mag parameter default as True. Please refer to plot_profile function for more details.'''
 
-if __name__ == '__main__':
-	main()
+	#CREATING BEACHBALL LIST
+	workingdir='.'
+	_, focalmechanismdir=readingfile(workingdir, 'FMS.xlsx')
+	
+	data_FM=pd.read_excel(focalmechanismdir, sheet_name='FMS')
+	df_FM=pd.DataFrame(data_FM, columns=['Longitude (°)', 'Latitude (°)', 'Depth (km)', 'Magnitude (Mw)', 'Strike 1', 'Dip 1', 'Rake 1', 'Strike 2', 'Dip 2', 'Rake 2', 'Area', 'Date'])
+	
+	mag_FM, lon, lat, depth, center_FM, nodal_plane1=[], [], [], [], [], []
+	for i, row in df_FM.iterrows():
+			mag_FM.append(row['Magnitude (Mw)'])
+			x_FM=row['Longitude (°)']
+			y_FM=row['Latitude (°)']
+			z_FM=row['Depth (km)']*(-1)
+			s_FM=row['Strike 1']
+			d_FM=row['Dip 1']
+			r_FM=row['Rake 1']
+			lon.append(x_FM)
+			lat.append(y_FM)
+			depth.append(z_FM)
+			center_FM.append([x_FM, y_FM, z_FM])
+			nodal_plane1.append([s_FM, d_FM, r_FM])
+	#Insert beachball list=[[R1, [X1,Y1,Z1], [S1, D1, R1]],[[R2, [X2,Y2,Z2], [S2, D2, R2]],...,[[Ri, [Xi,Yi,Zi], [Si, Di, Ri]]] from i=1 to n number of FMS.
+	beachball_list=[]
+	for i in range(0,len(mag_FM)):
+		beachball_list.append([mag_FM[i], center_FM[i], nodal_plane1[i]])
+	print('Total number of FMS:', len(beachball_list))
+
+	#DEFINING PROFILE PARAMETERS AND CREATING 3D FIGURE
+	A=(-74.5, 11.8)
+	Aprime=(-72.5, 9.5)
+	width=1
+	depth=250
+	fig=plt.figure(dpi=220)
+	ax=fig.add_subplot(111, projection = '3d')
+	ax.set_xlabel('Longitude (°)')
+	ax.set_ylabel('Latitude (°)')
+	ax.set_zlabel('Depth (km)')
+	corners, bounds, theta, center, norm_vec = profile_view(*A, *Aprime, width, depth)
+	x_A, y_A, x_Aprime, y_Aprime=plot_bounding_box(ax, A, Aprime, corners, depth)
+	in_bounds_list=in_bounds(beachball_list, bounds, center, theta, rotated = False)
+	plot_focal_mechanisms(in_bounds_list, ax, alpha = 1)
+	#plot_focal_mechanisms(beachball_list, ax, alpha=0.5)
+
+	#Plot the events and the focal mechanisms inside profile volume
+	_, events_dir=readingfile(workingdir, 'Events.xlsx')
+	data_events=pd.read_excel(events_dir)
+	df_events=pd.DataFrame(data_events, columns=['latitude', 'longitude', 'depth', 'mag'])
+
+	lon=df_events['longitude'].values.tolist()
+	lat=df_events['latitude'].values.tolist()
+	depth_events=df_events['depth'].values.tolist()
+	mag_events=df_events['mag'].values.tolist()
+	#cols_events=pltcolor(depth_events)
+	#size_events=pltsize(mag_events)
+	#ax.scatter(lon, lat, depth_events, c=cols_events, marker='.', alpha=0.01, edgecolor=cols_events, s=size_events, zorder=-1)	
+	
+	center_Events=[]
+	for i in range(0, len(lon)):
+		center_Events.append([lon[i], lat[i], depth_events[i]])
+	Event_list=[]
+	for i in range(0, len(lon)):
+		Event_list.append([mag_events[i], center_Events[i]])
+	Events_in_bounds=in_bounds(Event_list, bounds, center, theta, rotated=False)
+	
+	x_inbound, y_inbound, z_inbound, mag_inbound=[], [], [], []
+	for i in Events_in_bounds:
+		mag=i[0]
+		x, y, z=i[1]
+		x_inbound.append(x)
+		y_inbound.append(y)
+		z_inbound.append(z)
+		mag_inbound.append(mag)
+	col_inbounds=pltcolor(z_inbound)
+	size_inbounds=pltsize(mag_inbound)
+
+	ax.view_init(0, -theta*180/np.pi)
+	#ax.view_init(90, 270)
+
+	#PLOTTING PROFILE TOO
+	if depth_mag:
+		ax.scatter(x_inbound, y_inbound, z_inbound, c=col_inbounds, marker='.', alpha=0.05, edgecolor=col_inbounds, s=size_inbounds, zorder=-1)
+		plot_profile(in_bounds_list, Event_list, x_A, y_A, x_Aprime, y_Aprime, width, depth, depth_mag=True, Title='Profile plot', Figurename='Plot profile example')
+	else:
+		ax.scatter(x_inbound, y_inbound, z_inbound, c='b', marker='.', alpha=0.05, edgecolor='b', s=10, zorder=-1)
+		plot_profile(in_bounds_list, Event_list, x_A, y_A, x_Aprime, y_Aprime, width, depth, depth_mag=False, Title='Profile plot', Figurename='Plot profile example')
+	fig.savefig('3D Profile example', dpi=220)
+	plt.show()
+	plt.close('all')
+
+graphdir='expected_images'
+run_example=True
+if run_example:
+	example(depth_mag=True)
