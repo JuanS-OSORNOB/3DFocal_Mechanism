@@ -413,7 +413,7 @@ def plot_profile(FM_data_list, events_list, x1, y1, x2, y2, width, depth, depth_
 			ax.scatter(newy-ymin, depth, c='b', s=8)
 	#ax.set_aspect('equal')#---> Figure out how to set x and y values in km to set an equal aspect ratio
 	fig.canvas.draw()
-	tick_xlabels=[item.get_text() for item in ax.get_xticklabels()]
+	tick_xlabels = ax.get_xticks()
 	km_list_label=[]
 	for degree in tick_xlabels:
 		km=int(float(degree)*111)

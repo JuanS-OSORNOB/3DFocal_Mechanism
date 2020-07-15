@@ -1,9 +1,7 @@
 import numpy as np
 from math import isclose, radians, sin, cos
-from scipy.spatial.transform import Rotation
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from matplotlib.colors import LightSource
 from matplotlib.testing.compare import compare_images
 
 def circle_arc(axis1, axis2, start_angle, end_angle, center = [0, 0, 0], scale_factors = [1, 1, 1], radius = 1, points = 50):
