@@ -3,11 +3,13 @@ from vector_math import fm_quadrant, vectors
 from plotcoords import circle_arc
 from matplotlib import pyplot as plt
 from matplotlib.testing.compare import compare_images
+from topoprofile import plot_profile
 import re
 from mpl_toolkits.mplot3d import Axes3D
 import os
 import unittest
 import numpy as np
+from profile_example import example
 
 class test_single_fm(unittest.TestCase):
     def setUp(self):
@@ -64,6 +66,45 @@ class test_plot_multi(unittest.TestCase):
         expected = 'expected_images/vector_test.png'
         actual = 'actual_images/vector_test.png'
         self.save_comp(expected, actual)
+
+class test_event_profile(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        fig1, fig2 = example(depth_mag = True, verbose = False, show_plots = False)
+        fig1.savefig('actual_images/3D Profile example.png')
+        fig2.savefig('actual_images/Plot profile example.png')
+    def test_3D_profile(self):
+        diff = compare_images('expected_images/3D Profile example.png', 'actual_images/3D Profile example.png', .01)
+        self.assertIsNone(diff)
+    def test_2D_profile(self):
+        diff = compare_images('expected_images/Plot profile example.png', 'actual_images/Plot profile example.png', .01)
+        self.assertIsNone(diff)
+
+class test_basic_profile(unittest.TestCase):
+    def setUp(self):
+        self.data_list = [[1, [0, 0, -6], [0, 0, 0]],
+            [3, [-5, -5, -10], [10, 30, 40]],
+            [5, [-5, 10, -8], [280, 90, -30]],
+            [2, [5, -5, -10], [90, 0, 100]],
+            [10, [20, 20, -10], [359, 45, -100]]]
+    def test_profile1(self):
+        fig = plot_profile(self.data_list, [], -10, -10, 50, 50, 20, 40, in_degrees = False, verbose = False)
+        fig.savefig('actual_images/basic_profile1.png')
+        diff = compare_images('actual_images/basic_profile1.png', 'expected_images/basic_profile1.png', .01)
+        self.assertIsNone(diff)
+    def test_profile2(self):
+        fig = plot_profile(self.data_list, [],  50, 50, -10, -10, 20, 40, in_degrees = False, verbose = False)
+        fig.savefig('actual_images/basic_profile2.png')
+        diff = compare_images('actual_images/basic_profile2.png', 'expected_images/basic_profile2.png', .01)
+        self.assertIsNone(diff)
+    def test_profile3(self):
+        fig = plot_profile(self.data_list, [], -10, 10, 25, 25, 20, 500, in_degrees = True, fm_size = 20, verbose = False)
+        fig.savefig('actual_images/basic_profile3.png')
+        diff = compare_images('actual_images/basic_profile3.png', 'expected_images/basic_profile3.png', .01)
+        self.assertIsNone(diff)
+
+
+        
     
 if __name__ == '__main__':
     unittest.main()
