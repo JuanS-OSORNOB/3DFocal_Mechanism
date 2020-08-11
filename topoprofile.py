@@ -2,24 +2,13 @@ from focal_mechanism import plot_focal_mechanisms, vectors, scale_beachballs, pl
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
-from math import atan2, cos, sin, sqrt
+from math import isclose, atan2, sqrt
 import os, sys
 import pandas as pd
 from matplotlib.testing.compare import compare_images
 from datautils import readingfile, createpath
-from vector_math import translate_rotate_point, normalize_vector, angle_between
+from vector_math import translate_rotate_point, normalize_vector, angle_between, circle_angle
 from plotcoords import circle_arc
-
-
-
-def circle_angle(axis1, axis2, vec):
-	'''Returns the angle(in radians) between vec and axis1. Uses axis2 for directionality
-	(i.e. axis2 is at pi/2 rather than 3pi/2).'''
-	angle = angle_between(axis1, vec)
-	chirality = angle_between(axis2, vec)
-	if chirality > np.pi/2:
-		return 2 * np.pi - angle
-	return angle
 
 def lambert_projection(point, center_point, new_x_axis, new_y_axis):
 	'''Generates the Lambert azimuthal equal-area projection of a point on a sphere
@@ -355,10 +344,11 @@ def plot_profile(FM_data_list, events_list, x1, y1, x2, y2, width, depth, depth_
 	ax.set_ylim(zmin, zmax)
 	ax.set_xlabel('Relative profile distance (km)')
 	ax.set_ylabel('Depth (km)')
+	ax.set_aspect('equal')
+	scale_factors = [1, 1] #consider removing scale factors altogether
 	if 'Title' in kwargs:
 		ax.set_title(kwargs['Title'], fontsize=13)
 	in_bounds_list.sort() #first value was just for sorting back to front
-	scale_factors = scale_factors_2d(ax)
 	for i in range(len(in_bounds_list)):
 		_, x, event = in_bounds_list[i]
 		radius, center, angles = event
@@ -386,7 +376,7 @@ def plot_profile(FM_data_list, events_list, x1, y1, x2, y2, width, depth, depth_
 			ax.scatter(newy-ymin, depth, c=cols[i], s=size[i])
 		else:
 			ax.scatter(newy-ymin, depth, c='b', s=8)
-	ax.set_aspect('equal')#---> Figure out how to set x and y values in km to set an equal aspect ratio
+	
 	plt.show()
 	plt.close('all')
 	if 'Figurename' in kwargs:

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # Last revised: 19/06/20
 # (c) <Juan Sebastián Osorno Bolívar & Amy Teegarden>
-import argparse
 import numpy as np
 import pandas as pd
 import os, sys
@@ -11,16 +10,6 @@ from math import radians, sin, cos, isclose, asin, atan2
 from vector_math import vectors, fm_quadrant, fm_points, shorten_line
 from plotcoords import circle_arc
 from datautils import parse_file
-
-#command line arguments
-parser = argparse.ArgumentParser(description='Plot 3D focal mechanisms')
-parser. add_argument('filename', nargs = '?')
-parser.add_argument('-r')
-
-args = parser.parse_args()
-
-
-
 
 def plot_circle(radius, center, vecs, ax, scale_factors, fault_color = 'black', auxiliary_color = 'blue',
 				degrees = True):

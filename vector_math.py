@@ -2,6 +2,14 @@ import numpy as np
 from math import isclose, radians, sin, cos
 
 
+def circle_angle(axis1, axis2, vec):
+	'''Returns the angle(in radians) between vec and axis1. Uses axis2 for directionality
+	(i.e. axis2 is at pi/2 rather than 3pi/2).'''
+	angle = angle_between(axis1, vec)
+	chirality = angle_between(axis2, vec)
+	if chirality > np.pi/2:
+		return 2 * np.pi - angle
+	return angle
 
 def translate_rotate_point(x, y, angle, center):
 	'''Moves a point (x, y) so that the new point is the same with respect
