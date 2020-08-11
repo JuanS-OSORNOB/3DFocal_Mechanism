@@ -1,5 +1,6 @@
 from focal_mechanism import focal_mechanism, plot_focal_mechanisms
-from vector_math import fm_quadrant
+from vector_math import fm_quadrant, vectors
+from plotcoords import circle_arc
 from matplotlib import pyplot as plt
 from matplotlib.testing.compare import compare_images
 import re

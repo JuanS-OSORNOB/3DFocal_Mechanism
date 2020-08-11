@@ -136,3 +136,4 @@ else:
 	plot_focal_mechanisms(parse_file(args.filename, args.r))
 	plt.show()
 	plt.close('all')
+

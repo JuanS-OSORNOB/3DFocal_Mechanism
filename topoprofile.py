@@ -2,61 +2,15 @@ from focal_mechanism import plot_focal_mechanisms, vectors, scale_beachballs, pl
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
-from math import isclose, atan2, cos, sin, sqrt
+from math import atan2, cos, sin, sqrt
 import os, sys
 import pandas as pd
 from matplotlib.testing.compare import compare_images
+from datautils import readingfile, createpath
+from vector_math import translate_rotate_point, normalize_vector, angle_between
+from plotcoords import circle_arc
 
-def readingfile(path, file):
-	file=os.path.join(path, file)
-	if not os.path.isfile(file):
-		sys.exit('File(s) missing:'+file)
-	return path, file
 
-def createpath(directory):
-	if not os.path.isdir(directory):
-		os.mkdir(directory)
-	return directory
-
-def translate_rotate_point(x, y, angle, center):
-	'''Moves a point (x, y) so that the new point is the same with respect
-	to the origin as the point (x, y) was with respect to the point 'center'.
-	Then rotate the new point around the origin by 'angle', counterclockwise from the
-	x-axis.'''
-	x, y = x - center[0], y - center[1]
-	newx = x * cos(angle) - y * sin(angle)
-	newy = x * sin(angle) + y * cos(angle)
-	return newx, newy
-
-def circle_arc(axis1, axis2, start_angle, end_angle, points = 50):
-	'''Generates xyz coordinates for an arc of a circle. The vectors axis1
-	and axis2 must be perpendicular and in the plane of the circle.
-	The start_angle and end_angle determine which part of the circle
-	is included in the arc, with an angle of 0 corresponding to axis1 and
-	an angle of pi/2 corresponding to axis2. Angles are in radians.'''
-
-	if start_angle > end_angle:
-		end_angle += 2 * np.pi
-	
-	if not isclose(np.dot(axis1, axis2), 0, abs_tol = 1e-09):
-		raise Exception('Axes must be perpendicular.')
-	angle_points = np.linspace(start_angle, end_angle, points)
-	x = axis1[0] * np.cos(angle_points) + axis2[0] * np.sin(angle_points)
-	y = axis1[1] * np.cos(angle_points) + axis2[1] * np.sin(angle_points)
-	z = axis1[2] * np.cos(angle_points) + axis2[2] * np.sin(angle_points)
-
-	return np.array([x, y, z])
-
-def normalize_vector(vector):
-	#cast to float
-	vector = vector.astype(float)
-	return vector / np.linalg.norm(vector)
-
-def angle_between(vec1, vec2):
-	vec1 = normalize_vector(vec1)
-	vec2 = normalize_vector(vec2)
-	dotprod = np.clip(np.dot(vec1, vec2), -1.0, 1.0)
-	return np.arccos(dotprod)
 
 def circle_angle(axis1, axis2, vec):
 	'''Returns the angle(in radians) between vec and axis1. Uses axis2 for directionality
@@ -533,6 +487,6 @@ def example(depth_mag=True):
 	plt.close('all')
 
 graphdir='expected_images'
-run_example=False
+run_example=True
 if run_example:
 	example(depth_mag=True)

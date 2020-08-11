@@ -8,7 +8,9 @@ import os, sys
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from math import radians, sin, cos, isclose, asin, atan2
-from vector_math import circle_arc, vectors, fm_quadrant, fm_points, shorten_line
+from vector_math import vectors, fm_quadrant, fm_points, shorten_line
+from plotcoords import circle_arc
+from datautils import parse_file
 
 #command line arguments
 parser = argparse.ArgumentParser(description='Plot 3D focal mechanisms')
@@ -17,31 +19,8 @@ parser.add_argument('-r')
 
 args = parser.parse_args()
 
-def parse_file(filename, header):
-	#parse tab-delimited file into floats
-	data = []
-	with open(filename) as f:
-		if header: #skip first line
-			headers = f.readline()
-		for line in f.readlines():
-			line = line.strip().split('\t')
-			line = [float(x) for x in line]
-			x, y, z = line[1:4]
-			
-			entry = [line[0], [x, y, -1*z], line[4:7]]
-			data.append(entry)
-	return data
 
-def make_test_data():
-	center = [0, 0, 0]
-	radius = 1
-	data = []
-	for strike in range(0, 360, 30):
-		for dip in range(-180, 180, 30):
-			for slip in range(-180, 180, 30):
-				data.append([radius, center, [strike, dip, slip]])
 
-	return data
 
 def plot_circle(radius, center, vecs, ax, scale_factors, fault_color = 'black', auxiliary_color = 'blue',
 				degrees = True):
@@ -179,14 +158,8 @@ def focal_mechanism(radius, center, angles, ax, scale_factors, degrees = True, b
 	'''
 	
 	colors = ['red', 'white', 'red', 'white']
-	borders = [0, 3*np.pi / 2, np.pi, np.pi / 2]
-
-
-	v = np.linspace(0, np.pi, points)
-
 	vecs = vectors(angles, degrees = degrees)
-	p = vecs['P']
-	t = vecs['T']
+
 	quads = fm_points(angles, degrees, points)
 	for color, quad in zip(colors, quads):
 		x, y, z = quad
@@ -212,7 +185,7 @@ def focal_mechanism(radius, center, angles, ax, scale_factors, degrees = True, b
 		y = y * radius * scale_factors[1] + center[1]
 		z = z * radius * scale_factors[2] + center[2]
 
-
+		# return x, y, z
 		ax.plot_surface(x, y, z, color=color, linewidth=0, alpha = alpha, shade = shade)
 
 	if plot_planes:
@@ -225,6 +198,7 @@ def focal_mechanism(radius, center, angles, ax, scale_factors, degrees = True, b
 	if print_vecs:
 		print('Strike: {}°, Dip: {}°, Rake: {}°'.format(*angles))
 		print_vectors(vecs)
+	
 
 
 
