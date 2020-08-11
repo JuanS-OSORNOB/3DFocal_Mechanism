@@ -207,7 +207,8 @@ def profile_view(x1, y1, x2, y2, width, depth):
 	
 	[Describe what this function actually does]'''
 
-
+	if x1 == x2 and y1 == y2:
+		raise Exception('Endpoints must not be the same point.')
 
 	#vector in direction of midline, from (x1, y1) to (x2, y2)
 	vec1 = np.array([x2 - x1, y2 - y1, 0])
@@ -367,7 +368,27 @@ def pltsize(lst):
 			size.append(init**3.5)
 	return size
 
-def plot_profile(FM_data_list, events_list, x1, y1, x2, y2, width, depth, depth_mag=True, **kwargs):
+
+def gcs_degree_to_km(degree):
+	return 111 * degree
+
+def latlong_to_km(coords):
+	return [gcs_degree_to_km(coords[0]), gcs_degree_to_km(coords[1]), coords[2]]
+	
+
+def plot_profile(FM_data_list, events_list, x1, y1, x2, y2, width, depth, depth_mag=True, in_degrees = True, **kwargs):
+	if in_degrees:
+		x1 = gcs_degree_to_km(x1)
+		x2 = gcs_degree_to_km(x2)
+		y1 = gcs_degree_to_km(y1)
+		y2 = gcs_degree_to_km(y2)
+		width = gcs_degree_to_km(width)
+		for data in FM_data_list:
+			data[1] = latlong_to_km(data[1])
+		for data in events_list:
+			data[1] = latlong_to_km(data[1])
+
+
 	#Beachball projection
 	original_corners, bounds, theta, center, norm_vec = profile_view(x1, y1, x2, y2, width, depth)
 	in_bounds_list = in_bounds(FM_data_list, bounds, center, theta)
@@ -375,7 +396,7 @@ def plot_profile(FM_data_list, events_list, x1, y1, x2, y2, width, depth, depth_
 	fig=plt.figure(dpi=220, tight_layout=True)
 	ax=fig.add_subplot(111)
 	plt.grid(which='major', axis='x', linestyle='--', alpha=0.5)
-	xmin, xmax, ymin, ymax, zmin, zmax = bounds
+	_, _, ymin, ymax, zmin, zmax = bounds
 	ax.set_xlim(0, ymax-ymin)
 	ax.set_ylim(zmin, zmax)
 	ax.set_xlabel('Relative profile distance (km)')
@@ -411,14 +432,7 @@ def plot_profile(FM_data_list, events_list, x1, y1, x2, y2, width, depth, depth_
 			ax.scatter(newy-ymin, depth, c=cols[i], s=size[i])
 		else:
 			ax.scatter(newy-ymin, depth, c='b', s=8)
-	#ax.set_aspect('equal')#---> Figure out how to set x and y values in km to set an equal aspect ratio
-	fig.canvas.draw()
-	tick_xlabels = ax.get_xticks()
-	km_list_label=[]
-	for degree in tick_xlabels:
-		km=int(float(degree)*111)
-		km_list_label.append(km)
-	ax.set_xticklabels(km_list_label)
+	ax.set_aspect('equal')#---> Figure out how to set x and y values in km to set an equal aspect ratio
 	plt.show()
 	plt.close('all')
 	if 'Figurename' in kwargs:
@@ -514,11 +528,11 @@ def example(depth_mag=True):
 	else:
 		ax.scatter(x_inbound, y_inbound, z_inbound, c='b', marker='.', alpha=0.05, edgecolor='b', s=10, zorder=-1)
 		plot_profile(in_bounds_list, Event_list, x_A, y_A, x_Aprime, y_Aprime, width, depth, depth_mag=False, Title='Profile plot', Figurename='Plot profile example')
-	fig.savefig('3D Profile example', dpi=220)
+	# fig.savefig('3D Profile example', dpi=220)
 	plt.show()
 	plt.close('all')
 
 graphdir='expected_images'
-run_example=True
+run_example=False
 if run_example:
 	example(depth_mag=True)
