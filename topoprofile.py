@@ -1,4 +1,4 @@
-from focal_mechanism import plot_focal_mechanisms, vectors, scale_beachballs, plot_vector
+from focal_mechanism import plot_focal_mechanisms, scale_beachballs, plot_vector
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
@@ -7,7 +7,7 @@ import os, sys
 import pandas as pd
 from matplotlib.testing.compare import compare_images
 from datautils import readingfile, createpath
-from vector_math import translate_rotate_point, normalize_vector, angle_between, circle_angle
+from vector_math import translate_rotate_point, normalize_vector, angle_between, circle_angle, vectors
 from plotcoords import circle_arc
 
 def lambert_projection(point, center_point, new_x_axis, new_y_axis):

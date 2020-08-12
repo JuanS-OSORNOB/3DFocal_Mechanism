@@ -6,10 +6,113 @@ import pandas as pd
 import os, sys
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from math import radians, sin, cos, isclose, asin, atan2
-from vector_math import vectors, fm_quadrant, fm_points, shorten_line
+from math import radians, sin, cos, isclose
+from vector_math import fm_quadrant, fm_points, shorten_line, vec_to_angles, vectors
 from plotcoords import circle_arc
 from datautils import parse_file
+
+class Event(object):
+	def __init__(self, latitude, longitude, altitude, magnitude, projection = 'equirectangular'):
+		self.projection = projection
+		self.magnitude = magnitude
+		if projection == 'equirectangular':
+			self.location = self.equirectangular_projection(latitude, longitude, altitude)
+	#There may be support for projections other than equirectangular in the future
+	def equirectangular_projection(self, latitude, longitude, altitude):
+		return (latitude, longitude, altitude)
+
+class FocalMechanism(Event):
+	def __init__(self, latitude, longitude, altitude, magnitude, strike, dip, rake, projection = 'equirectangular', degrees = True):
+		super().__init__(latitude, longitude, altitude, magnitude, projection)
+		self.strike = strike
+		self.dip = dip
+		self.rake = rake
+		self.vectors = self.calculate_vectors((strike, dip, rake), degrees = degrees)
+
+	def print_vectors(self):
+		'''Takes a dict of xyz vectors, prints the vector type, xyz vector, and plunge/bearing format.'''
+		textstring = '{0}: <{1},{2},{3}>, bearing: {4}°, plunge: {5}°'
+		for v in self.vectors:
+			bearing, plunge = vec_to_angles(self.vectors[v])
+			#shorten to two decimal places
+			shortened = ['{:.2f}'.format(x) for x in [*self.vectors[v], bearing, plunge]]
+			vecs_FM=textstring.format(v, *shortened)
+			print(vecs_FM)
+	
+	def print_angles(self):
+		print('Strike: {}°, Dip: {}°, Rake: {}°'.format(self.strike, self.dip, self.rake))
+	
+	def calculate_vectors(self, angles, degrees = True):
+		if degrees:
+			strike, dip, rake = [radians(x) for x in angles]
+		else:
+			strike, dip, rake = angles
+
+		strike_vector = np.array([sin(strike),
+								cos(strike),
+								0])
+		dip_vector = np.array([cos(dip)*cos(strike),
+							-cos(dip)*sin(strike),
+							-sin(dip)])
+		rake_vector = np.array([cos(rake)*sin(strike) - sin(rake)*cos(dip)*cos(strike),
+								cos(rake)*cos(strike) + sin(rake)*cos(dip)*sin(strike),
+								sin(rake)*sin(dip)])
+		normal_vector = np.array([sin(dip)*cos(strike),
+								-sin(dip)*sin(strike),
+								cos(dip)])
+		null_vector = np.array([-sin(rake)*sin(strike) - cos(rake)*cos(dip)*cos(strike),
+								-sin(rake)*cos(strike) + cos(rake)*cos(dip)*sin(strike),
+								cos(rake)*sin(dip)])
+
+		p_vector = np.array([sin(dip)*cos(strike) - cos(rake)*sin(strike) + sin(rake)*cos(dip)*cos(strike),
+							-sin(dip)*sin(strike) - cos(rake)*cos(strike) - sin(rake)*cos(dip)*sin(strike),
+							cos(dip) - sin(rake)*sin(dip)])
+
+		t_vector = np.array([sin(dip)*cos(strike) + cos(rake)*sin(strike) - sin(rake)*cos(dip)*cos(strike),
+							-sin(dip)*sin(strike) + cos(rake)*cos(strike) + sin(rake)*cos(dip)*sin(strike),
+							cos(dip) + sin(rake)*sin(dip)])
+		#sanity checks
+
+		#normal vector should be the cross product of dip vector and strike vector
+		norm_correct = np.isclose(normal_vector, np.cross(dip_vector, strike_vector))   
+		assert(norm_correct.all())
+		
+		#rake vector should be cos(rake) * strike_vector - sin(rake) * dip_vector
+		rake_correct = np.isclose(rake_vector, cos(rake) * strike_vector - sin(rake) * dip_vector)                            
+		assert(rake_correct.all())
+		
+		#null vector should be the cross product of normal vector and rake vector
+		null_correct = np.isclose(null_vector, np.cross(normal_vector, rake_vector))
+		assert(null_correct.all())
+
+		#p should be normal - rake
+		p_correct = np.isclose(p_vector, normal_vector - rake_vector)
+		assert(p_correct.all())
+		
+		#t should be normal + rake
+		t_correct = np.isclose(t_vector, normal_vector + rake_vector)
+		assert(t_correct.all())
+
+		#normalize p and t so they have a length of 1
+		p_vector = p_vector / np.linalg.norm(p_vector)
+		t_vector = t_vector / np.linalg.norm(t_vector)
+
+		#check if null, p, and t are pointing downward. If not, reverse them.
+		if null_vector[2] > 0:
+			null_vector = null_vector * -1
+		if p_vector[2] > 0:
+			p_vector = p_vector * -1
+		if t_vector[2] > 0:
+			t_vector = t_vector * -1
+
+		return {'strike': strike_vector,
+				'dip' : dip_vector,
+				'rake' : rake_vector,
+				'normal' : normal_vector,
+				'B': null_vector,
+				'P': p_vector,
+				'T': t_vector}
+
 
 def plot_circle(radius, center, vecs, ax, scale_factors, fault_color = 'black', auxiliary_color = 'blue',
 				degrees = True):
@@ -29,31 +132,6 @@ def plot_circle(radius, center, vecs, ax, scale_factors, fault_color = 'black', 
 def plot_vector(radius, center, vec, ax, scale_factors, color):
 	v = vec * scale_factors
 	ax.quiver(*center, *v, colors = color, length = radius)
-
-def vec_to_angles(vector):
-	'''takes an xyz vector and returns bearing (degrees clockwise from y axis) and
-	plunge (degrees below horizontal plane) angles.'''
-	
-	x, y, z = vector
-	mag = np.linalg.norm(vector)
-	bearing = atan2(x, y) * 180/np.pi
-	plunge = -asin(z/mag) * 180/np.pi
-
-	if bearing<0:
-		bearing=360+bearing
-	return bearing, plunge
-
-def print_vectors(vecs):
-	'''Takes a dict of xyz vectors, prints the vector type, xyz vector, and plunge/bearing format.'''
-
-	textstring = '{0}: <{1},{2},{3}>, bearing: {4}°, plunge: {5}°'
-	for v in vecs:
-		bearing, plunge = vec_to_angles(vecs[v])
-		#shorten to two decimal places
-		shortened = ['{:.2f}'.format(x) for x in [*vecs[v], bearing, plunge]]
-		vecs_FM=textstring.format(v, *shortened)
-		print(vecs_FM)
-	return bearing, plunge
 
 def scale_beachballs(beachball_list, ax):
 	'''plot everything else before running this function, or the axis limits
@@ -145,11 +223,11 @@ def focal_mechanism(radius, center, angles, ax, scale_factors, degrees = True, b
 	
 	Strike is 0 to 360 degrees. Dip is 0 to 90 degrees. Rake is between -180 and 180 degrees.
 	'''
-	
+	fm = FocalMechanism(*center, radius, *angles, degrees = degrees)
 	colors = ['red', 'white', 'red', 'white']
 	vecs = vectors(angles, degrees = degrees)
 
-	quads = fm_points(angles, degrees, points)
+	quads = fm_points(fm, points)
 	for color, quad in zip(colors, quads):
 		x, y, z = quad
 
@@ -184,9 +262,7 @@ def focal_mechanism(radius, center, angles, ax, scale_factors, degrees = True, b
 		vec = vecs[vectype]
 		plot_vector(radius, center, vec, ax, scale_factors, c)
 
-	if print_vecs:
-		print('Strike: {}°, Dip: {}°, Rake: {}°'.format(*angles))
-		print_vectors(vecs)
+x = FocalMechanism(10, 5, -6, 2, 10, 15, 20)
 	
 
 

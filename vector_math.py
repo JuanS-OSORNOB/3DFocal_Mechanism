@@ -1,5 +1,5 @@
 import numpy as np
-from math import isclose, radians, sin, cos
+from math import isclose, radians, sin, cos, atan2, asin
 
 
 def circle_angle(axis1, axis2, vec):
@@ -103,10 +103,10 @@ def vectors(angles, degrees = True):
 			'P': p_vector,
 			'T': t_vector}
 
-def fm_quadrant(border, angles, degrees, points):
+def fm_quadrant(border, focalmechanism, points):
     elevs = np.linspace(np.pi/2, -np.pi/2, points)
     azims = np.linspace(border + np.pi/2, border, points)
-    vecs = vectors(angles, degrees = degrees)
+    vecs = focalmechanism.vectors
     rake = np.array([vecs['rake']]).T
     normal = np.array([vecs['normal']]).T
     null = np.array([vecs['B']]).T
@@ -126,11 +126,11 @@ def fm_quadrant(border, angles, degrees, points):
     z = Z
     return x, y, z
 
-def fm_points(angles, degrees, points):
+def fm_points(focalmechanism, points):
     borders = [0, np.pi / 2, np.pi, 3 * np.pi / 2,]
     quads = []
     for border in borders:
-        quads.append(fm_quadrant(border, angles, degrees, points))
+        quads.append(fm_quadrant(border, focalmechanism, points))
     return quads
 
 def shorten_line(x, y, z, i, j, i2, j2):
@@ -150,3 +150,16 @@ def shorten_line(x, y, z, i, j, i2, j2):
 	z[i, j] = 0
 	x[i, j] = x[i, j] - xdist
 	y[i, j] = y[i, j] - ydist
+
+
+def vec_to_angles(vector):
+	'''takes an xyz vector and returns bearing (degrees clockwise from y axis) and
+	plunge (degrees below horizontal plane) angles.'''
+	x, y, z = vector
+	mag = np.linalg.norm(vector)
+	bearing = atan2(x, y) * 180/np.pi
+	plunge = -asin(z/mag) * 180/np.pi
+
+	if bearing<0:
+		bearing=360+bearing
+	return bearing, plunge
