@@ -215,7 +215,7 @@ def focal_mechanism(fm, ax, scale_factors, bottom_half = False,
 		ax.plot_surface(x, y, z, color=color, linewidth=0, alpha = alpha, shade = shade)
 
 	if plot_planes:
-		plot_circle(fm, ax, scale_factors, degrees = degrees)
+		plot_circle(fm, ax, scale_factors)
 
 	for vectype, c in zip(vector_plots, vector_colors):
 		vec = fm.vectors[vectype]

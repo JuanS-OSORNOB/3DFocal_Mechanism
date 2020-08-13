@@ -1,5 +1,5 @@
 from focal_mechanism import focal_mechanism, plot_focal_mechanisms, FocalMechanism
-from plotcoords import circle_arc, fm_quadrant
+from plotcoords import circle_arc, fm_quadrant, translate_and_scale
 from matplotlib import pyplot as plt
 from matplotlib.testing.compare import compare_images
 from topoprofile import plot_profile
@@ -103,6 +103,13 @@ class test_basic_profile(unittest.TestCase):
         diff = compare_images('actual_images/basic_profile3.png', 'expected_images/basic_profile3.png', .01)
         self.assertIsNone(diff)
 
+class test_coords(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.numpy_2d_int = np.array([[1, 2, 3, 10, 2], [4, 6, 3, 6, 4]])
+    def test_translate(self):
+        coords = translate_and_scale(self.numpy_2d_int, [0, 0])
+        self.assertTrue(np.array_equal(coords, self.numpy_2d_int))
 
         
     

@@ -32,21 +32,15 @@ def fm_quadrant(border, focalmechanism, points):
     rake = np.array([vecs['rake']]).T
     normal = np.array([vecs['normal']]).T
     null = np.array([vecs['B']]).T
-    X1 = []
-    Y1 = []
-    Z1 = []
+    X = []
+    Y = []
+    Z = []
     for azim in azims:
         x, y, z = (np.cos(azim) * rake + np.sin(azim) * normal) * np.cos(elevs) + np.sin(elevs)*null
-        X1.append(x)
-        Y1.append(y)
-        Z1.append(z)
-    X = np.array(X1)
-    Y = np.array(Y1)
-    Z = np.array(Z1)
-    x = X
-    y = Y
-    z = Z
-    return x, y, z
+        X.append(x)
+        Y.append(y)
+        Z.append(z)
+    return np.array(X), np.array(Y), np.array(Z)
 
 def fm_points(focalmechanism, points):
     borders = [0, np.pi / 2, np.pi, 3 * np.pi / 2,]	
@@ -55,3 +49,39 @@ def fm_points(focalmechanism, points):
     for border in borders:
         quads.append(fm_quadrant(border, focalmechanism, points))
     return colors, quads
+
+def translate_and_scale(coords, center_vector, scale_factors = None):
+    '''Takes a set of coordinates in the form [[x1, x2, ..., xn], [y1, y2, ..., yn]]
+    or [[x1, x2, ..., xn], [y1, y2, ..., yn], [z1, z2, ..., zn]] and scales them according to scale_factors, 
+    then translates them from their current location to location + center_vector. Generally, this will be used for coordinates
+    centered at the origin, since scaling will give unexpected results if the coordinates are not
+    centered at the origin. In this case, the new location will be at center_vector. 
+    However, this function can be used for translation only, if no value is given for scale_factors.'''
+    if len(coords) == 2:
+        x, y = coords
+        cx, cy = center_vector
+        if scale_factors:
+            sx, sy = scale_factors
+        else:
+            sx, sy = 1, 1
+    elif len(coords) == 3:
+        x, y, z = coords
+        cx, cy, cz = center_vector
+        if scale_factors:
+            sx, sy, sz = scale_factors
+        else:
+            sx, sy, sz = 1, 1, 1
+    else:
+        raise Exception('2 or 3 sets of coordinates expected; got {}'.format(len(coords)))
+    x = translate_and_scale_single(x, cx, sx)
+    y = translate_and_scale_single(y, cy, sy)
+    if len(coords) == 3:
+        z = translate_and_scale_single(z, cz, sz)
+        return x, y, z
+    return x, y
+
+def translate_and_scale_single(coords, location, scale_factor = 1):
+    '''Takes a list of coordinates and multiplies them by scale_factor, then adds location.'''
+    coords = np.array(coords)
+    coords = coords * scale_factor + location
+    return coords
