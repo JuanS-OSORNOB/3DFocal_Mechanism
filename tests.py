@@ -1,6 +1,5 @@
-from focal_mechanism import focal_mechanism, plot_focal_mechanisms
-from vector_math import fm_quadrant
-from plotcoords import circle_arc
+from focal_mechanism import focal_mechanism, plot_focal_mechanisms, FocalMechanism
+from plotcoords import circle_arc, fm_quadrant
 from matplotlib import pyplot as plt
 from matplotlib.testing.compare import compare_images
 from topoprofile import plot_profile
@@ -24,7 +23,8 @@ class test_single_fm(unittest.TestCase):
                 s, d, r = [int(x) for x in self.fregex.search(f).groups()]
                 fig = plt.figure()
                 ax = fig.add_subplot(111, projection = '3d')
-                focal_mechanism(1, [0, 0, 0], [s, d, r], ax, [1, 1, 1], shade = False)
+                fm = FocalMechanism(0, 0, 0, 1, s, d, r)
+                focal_mechanism(fm, ax, [1, 1, 1], shade = False)
                 fig.savefig(act_img)
                 plt.close(fig)
                 diff = compare_images(exp_img, act_img, .01)

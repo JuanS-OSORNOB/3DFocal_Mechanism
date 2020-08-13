@@ -103,35 +103,7 @@ def vectors(angles, degrees = True):
 			'P': p_vector,
 			'T': t_vector}
 
-def fm_quadrant(border, focalmechanism, points):
-    elevs = np.linspace(np.pi/2, -np.pi/2, points)
-    azims = np.linspace(border + np.pi/2, border, points)
-    vecs = focalmechanism.vectors
-    rake = np.array([vecs['rake']]).T
-    normal = np.array([vecs['normal']]).T
-    null = np.array([vecs['B']]).T
-    X1 = []
-    Y1 = []
-    Z1 = []
-    for azim in azims:
-        x, y, z = (np.cos(azim) * rake + np.sin(azim) * normal) * np.cos(elevs) + np.sin(elevs)*null
-        X1.append(x)
-        Y1.append(y)
-        Z1.append(z)
-    X = np.array(X1)
-    Y = np.array(Y1)
-    Z = np.array(Z1)
-    x = X
-    y = Y
-    z = Z
-    return x, y, z
 
-def fm_points(focalmechanism, points):
-    borders = [0, np.pi / 2, np.pi, 3 * np.pi / 2,]
-    quads = []
-    for border in borders:
-        quads.append(fm_quadrant(border, focalmechanism, points))
-    return quads
 
 def shorten_line(x, y, z, i, j, i2, j2):
 	'''shorten line between <x[i,j], y[i,j], z[i,j]>

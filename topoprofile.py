@@ -1,4 +1,4 @@
-from focal_mechanism import plot_focal_mechanisms, scale_beachballs, plot_vector
+from focal_mechanism import plot_focal_mechanisms, plot_vector
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
@@ -9,6 +9,7 @@ from matplotlib.testing.compare import compare_images
 from datautils import readingfile, createpath
 from vector_math import translate_rotate_point, normalize_vector, angle_between, circle_angle, vectors
 from plotcoords import circle_arc
+from mpl_plots import generate_scale_factors
 
 def lambert_projection(point, center_point, new_x_axis, new_y_axis):
 	'''Generates the Lambert azimuthal equal-area projection of a point on a sphere
@@ -273,12 +274,6 @@ def plot_lambert(ax, center, radius, scale_factors, zorder, *args):
 	X, Y = arrayize(filled_area) 
 	ax.plot(X * sc_x * radius + center_x, Y * sc_y * radius + center[1], color = 'black', zorder = zorder * 2) 
 	ax.fill(X * sc_x * radius + center_x, Y * sc_y * radius + center[1], color = 'red', zorder = zorder * 2 - 1)
-
-def scale_factors_2d(ax):
-	ratio = ax.get_data_ratio()
-	if ratio < 1:
-		return (1, ratio)
-	return (1 / ratio, 1)
 
 def pltcolor(lst):
 	cols=[]

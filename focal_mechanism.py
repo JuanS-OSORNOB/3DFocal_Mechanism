@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Last revised: 19/06/20
+# Last revised: 13/08/20
 # (c) <Juan Sebastián Osorno Bolívar & Amy Teegarden>
 import numpy as np
 import pandas as pd
@@ -7,9 +7,10 @@ import os, sys
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from math import radians, sin, cos, isclose
-from vector_math import fm_quadrant, fm_points, shorten_line, vec_to_angles, vectors
-from plotcoords import circle_arc
+from vector_math import shorten_line, vec_to_angles, vectors
+from plotcoords import circle_arc, fm_quadrant, fm_points
 from datautils import parse_file
+from mpl_plots import generate_scale_factors
 
 class Event(object):
 	def __init__(self, latitude, longitude, altitude, magnitude, projection = 'equirectangular'):
@@ -114,8 +115,11 @@ class FocalMechanism(Event):
 				'T': t_vector}
 
 
-def plot_circle(radius, center, vecs, ax, scale_factors, fault_color = 'black', auxiliary_color = 'blue',
+def plot_circle(focalmechanism, ax, scale_factors, fault_color = 'black', auxiliary_color = 'blue',
 				degrees = True):
+	vecs = focalmechanism.vectors
+	center = focalmechanism.location
+	radius = focalmechanism.magnitude
 	strike = vecs['strike']
 	dip = vecs['dip']
 	normal = vecs['normal']
@@ -133,56 +137,10 @@ def plot_vector(radius, center, vec, ax, scale_factors, color):
 	v = vec * scale_factors
 	ax.quiver(*center, *v, colors = color, length = radius)
 
-def scale_beachballs(beachball_list, ax):
-	'''plot everything else before running this function, or the axis limits
-	may change and the focal mechanisms may not look spherical.'''
-	xaxis = ax.get_xlim()
-	yaxis = ax.get_ylim()
-	zaxis = ax.get_zbound()
-
-	#get minimum and maximum bounds for each axis
-	minx = min(xaxis)
-	maxx = max(xaxis)
-	miny = min(yaxis)
-	maxy = max(yaxis)
-	minz = min(zaxis)
-	maxz = max(zaxis)
-
-	
-	#check if beachballs would exceed current bounds and record new bounds
-	for radius, center, angles in beachball_list:
-		if center[0] - radius < minx:
-			minx = center[0] - radius
-		if center[0] + radius > maxx:
-			maxx = center[0] + radius
-		if center[1] - radius < miny:
-			miny = center[1] - radius
-		if center[1] + radius > maxy:
-			maxy = center[1] + radius
-		if center[2] - radius < minz:
-			minz =  center[2] - radius
-		if center[2] + radius > maxz:
-			maxz = center[2] + radius
-
-	#actually set new bounds
-	if xaxis[0] > xaxis[1]: #axis is inverted
-		minx, maxx = maxx, minx
-	ax.set_xlim(minx, maxx)
-	if yaxis[0] > yaxis[1]:
-		miny, maxy = maxy, miny
-	ax.set_ylim(miny, maxy)
-	if zaxis[0] > zaxis[1]:
-		minz, maxz = maxz, minz
-	ax.set_zlim(minz, maxz)
 
 
-	#calculate axis lengths and normalize by longest axis
-	axis_len = [maxx - minx, maxy - miny, maxz - minz]
-	scale_factors = [i / max(axis_len) for i in axis_len]
-	return scale_factors
 
-
-def plot_focal_mechanisms(data_list, ax = None, **kwargs):
+def plot_focal_mechanisms(data_list, ax = None, degrees = True, **kwargs):
 	'''kwargs:
 			degrees: True or False (default True).
 				If True, strike, dip, and rake angles are given
@@ -203,16 +161,19 @@ def plot_focal_mechanisms(data_list, ax = None, **kwargs):
 	if ax == None:
 		fig = plt.figure()
 		ax = fig.add_subplot(111, projection = '3d')
+	focalmechanisms = []
+	for magnitude, location, angles in data_list:
+		focalmechanisms.append(FocalMechanism(*location, magnitude, *angles, degrees = degrees))
 
-	scale_factors = scale_beachballs(data_list, ax)
-	for radius, center, angles in data_list:
-		focal_mechanism(radius, center, angles, ax, scale_factors, **kwargs)
+	scale_factors = generate_scale_factors(focalmechanisms, ax)
+	for fm in focalmechanisms:
+		focal_mechanism(fm, ax, scale_factors, **kwargs)
 	if 'vector_plots' in kwargs:
 		#make proxy legend
 		for label, color in zip(kwargs['vector_plots'], kwargs['vector_colors']):
 			ax.plot([], [], label = label, color = color)
 		plt.legend()
-def focal_mechanism(radius, center, angles, ax, scale_factors, degrees = True, bottom_half = False,
+def focal_mechanism(fm, ax, scale_factors, bottom_half = False,
 					alpha = .75, points = 20, plot_planes = True, vector_plots = [], vector_colors = [],
 					print_vecs = False, shade = True):
 	'''radius determines the size of the beach ball, center is a list of x,y,z coordinates
@@ -223,11 +184,9 @@ def focal_mechanism(radius, center, angles, ax, scale_factors, degrees = True, b
 	
 	Strike is 0 to 360 degrees. Dip is 0 to 90 degrees. Rake is between -180 and 180 degrees.
 	'''
-	fm = FocalMechanism(*center, radius, *angles, degrees = degrees)
-	colors = ['red', 'white', 'red', 'white']
-	vecs = vectors(angles, degrees = degrees)
-
-	quads = fm_points(fm, points)
+	radius = fm.magnitude
+	center = fm.location
+	colors, quads = fm_points(fm, points)
 	for color, quad in zip(colors, quads):
 		x, y, z = quad
 
@@ -256,13 +215,11 @@ def focal_mechanism(radius, center, angles, ax, scale_factors, degrees = True, b
 		ax.plot_surface(x, y, z, color=color, linewidth=0, alpha = alpha, shade = shade)
 
 	if plot_planes:
-		plot_circle(radius, center, vecs, ax, scale_factors, degrees = degrees)
+		plot_circle(fm, ax, scale_factors, degrees = degrees)
 
 	for vectype, c in zip(vector_plots, vector_colors):
-		vec = vecs[vectype]
+		vec = fm.vectors[vectype]
 		plot_vector(radius, center, vec, ax, scale_factors, c)
-
-x = FocalMechanism(10, 5, -6, 2, 10, 15, 20)
 	
 
 
