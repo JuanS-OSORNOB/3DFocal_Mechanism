@@ -1,5 +1,3 @@
-from focal_mechanism import focal_mechanism, plot_focal_mechanisms, FocalMechanism
-from plotcoords import circle_arc, fm_quadrant, translate_and_scale
 from matplotlib import pyplot as plt
 from matplotlib.testing.compare import compare_images
 from topoprofile import plot_profile
@@ -9,6 +7,8 @@ import os
 import unittest
 import numpy as np
 from profile_example import example
+from focal_mechanism import focal_mechanism, plot_focal_mechanisms, FocalMechanism
+from plotcoords import fm_quadrant, translate_and_scale
 
 class test_single_fm(unittest.TestCase):
     def setUp(self):
@@ -107,11 +107,33 @@ class test_coords(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.numpy_2d_int = np.array([[1, 2, 3, 10, 2], [4, 6, 3, 6, 4]])
-    def test_translate(self):
-        coords = translate_and_scale(self.numpy_2d_int, [0, 0])
+        cls.numpy_3d_int = np.array([[3, 4, 6, 4], [2, 3, 5, 6], [1, 1, 2, 4]])
+    def test_no_change2d(self):
+        coords = translate_and_scale(self.numpy_2d_int, [0, 0], [1, 1])
         self.assertTrue(np.array_equal(coords, self.numpy_2d_int))
-
-        
+    def test_translate2dpos(self):
+        coords = translate_and_scale(self.numpy_2d_int, [1, 1])
+        expected = np.array([[2, 3, 4, 11, 3], [5, 7, 4, 7, 5]])
+        self.assertTrue(np.array_equal(coords, expected))
+    def test_translate2dneg(self):
+        coords = translate_and_scale(self.numpy_2d_int, [-1, -1])
+        expected = np.array([[0, 1, 2, 9, 1], [3, 5, 2, 5, 3]])
+        self.assertTrue(np.array_equal(coords, expected))
+    def test_scale2dlarger(self):
+        coords = translate_and_scale(self.numpy_2d_int, [0, 0], [2, 2])
+        expected = np.array([[2, 4, 6, 20, 4], [8, 12, 6, 12, 8]])
+        self.assertTrue(np.array_equal(coords, expected))
+    def test_full_2d(self):
+        coords = translate_and_scale(self.numpy_2d_int, [1, -5], [2, .5])
+        expected = np.array([[3, 5, 7, 21, 5], [-3, -2, -3.5, -2, -3]])
+        self.assertTrue(np.array_equal(coords, expected))
+    def test_no_change3d(self):
+        coords = translate_and_scale(self.numpy_3d_int, [0, 0, 0], [1, 1, 1])
+        self.assertTrue(np.array_equal(coords, self.numpy_3d_int))
+    def test_full_3d(self):
+        coords = translate_and_scale(self.numpy_3d_int, [1, -2, 0], [2, .5, 3])
+        expected = np.array([[7, 9, 13, 9], [-1, -.5, .5, 1], [3, 3, 6, 12]])
+        self.assertTrue(np.array_equal(coords, expected))
     
 if __name__ == '__main__':
     unittest.main()

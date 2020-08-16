@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from math import radians, sin, cos, isclose
 from vector_math import shorten_line, vec_to_angles, vectors
-from plotcoords import circle_arc, fm_quadrant, fm_points
+from plotcoords import circle_arc, fm_quadrant, fm_points, translate_and_scale
 from datautils import parse_file
 from mpl_plots import generate_scale_factors
 
@@ -115,22 +115,23 @@ class FocalMechanism(Event):
 				'T': t_vector}
 
 
-def plot_circle(focalmechanism, ax, scale_factors, fault_color = 'black', auxiliary_color = 'blue',
+def plot_circle(focalmechanism, ax, axis_ratios, fault_color = 'black', auxiliary_color = 'blue',
 				degrees = True):
-	vecs = focalmechanism.vectors
-	center = focalmechanism.location
-	radius = focalmechanism.magnitude
-	strike = vecs['strike']
-	dip = vecs['dip']
-	normal = vecs['normal']
-	null = vecs['B']
+				
+	strike = focalmechanism.vectors['strike']
+	dip = focalmechanism.vectors['dip']
+	normal = focalmechanism.vectors['normal']
+	null = focalmechanism.vectors['B']
+	scale_factors = [focalmechanism.magnitude * x for x in axis_ratios]
 
 	#fault plane, defined by strike and dip vectors which are orthogonal and both in the plane
-	x, y, z = circle_arc(strike, dip, 0, 2 * np.pi, center, scale_factors, radius)
+	coords = circle_arc(strike, dip, 0, 2 * np.pi)
+	x, y, z = translate_and_scale(coords, focalmechanism.location, scale_factors)
 	ax.plot(x, y, z, color = fault_color, linewidth = 2)
 	
 	#auxiliary plane, defined by normal and null vectors which are orthogonal and both in the plane
-	x, y, z = circle_arc(normal, null, 0, 2 * np.pi, center, scale_factors, radius)
+	coords = circle_arc(normal, null, 0, 2 * np.pi)
+	x, y, z = translate_and_scale(coords, focalmechanism.location, scale_factors)
 	ax.plot(x, y, z, color = auxiliary_color, linewidth = 2)
 
 def plot_vector(radius, center, vec, ax, scale_factors, color):

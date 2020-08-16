@@ -103,6 +103,7 @@ def example(depth_mag=True, verbose = True, show_plots = False):
 		plt.close('all')
 	return fig, fig2
 
-#example(depth_mag=True, verbose = True, show_plots = True)
+if __name__ == '__main__':
+	example(depth_mag=True, verbose = True, show_plots = True)
 
 
