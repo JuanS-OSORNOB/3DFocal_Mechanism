@@ -1,6 +1,21 @@
 import numpy as np
 from math import isclose, radians, sin, cos, atan2, asin
 
+def remove_top(coords):
+	'''Takes a set of 3D coordinates. Removes everything above the xy plane.'''
+	x, y, z = coords
+	#for each point, determine if the line between the point above it
+	#and/or to the left (in the grid, not in xyz space), crosses
+	#the xy plane.
+	for i in range(len(x)):
+		for j in range(len(x)):
+			if i != 0 and z[i, j] * z[i - 1, j] < 0:
+				shorten_line(x, y, z, i, j, i - 1, j)
+			if j != 0 and z[i, j] * z[i, j - 1] < 0:
+				shorten_line(x, y, z, i, j, i, j - 1)
+				
+	x[np.where(z > 0)] = np.nan
+	return np.array([x, y, z])
 
 def circle_angle(axis1, axis2, vec):
 	'''Returns the angle(in radians) between vec and axis1. Uses axis2 for directionality

@@ -7,8 +7,9 @@ import os, sys
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from math import radians, sin, cos, isclose
-from vector_math import shorten_line, vec_to_angles, vectors
-from plotcoords import circle_arc, fm_quadrant, fm_points, translate_and_scale
+from vector_math import vec_to_angles, remove_top
+from plotcoords import fm_quadrant, fm_points, translate_and_scale
+from mpl_plots import plot_circle, plot_vector
 from datautils import parse_file
 from mpl_plots import generate_scale_factors
 
@@ -114,33 +115,6 @@ class FocalMechanism(Event):
 				'P': p_vector,
 				'T': t_vector}
 
-
-def plot_circle(focalmechanism, ax, axis_ratios, fault_color = 'black', auxiliary_color = 'blue',
-				degrees = True):
-				
-	strike = focalmechanism.vectors['strike']
-	dip = focalmechanism.vectors['dip']
-	normal = focalmechanism.vectors['normal']
-	null = focalmechanism.vectors['B']
-	scale_factors = [focalmechanism.magnitude * x for x in axis_ratios]
-
-	#fault plane, defined by strike and dip vectors which are orthogonal and both in the plane
-	coords = circle_arc(strike, dip, 0, 2 * np.pi)
-	x, y, z = translate_and_scale(coords, focalmechanism.location, scale_factors)
-	ax.plot(x, y, z, color = fault_color, linewidth = 2)
-	
-	#auxiliary plane, defined by normal and null vectors which are orthogonal and both in the plane
-	coords = circle_arc(normal, null, 0, 2 * np.pi)
-	x, y, z = translate_and_scale(coords, focalmechanism.location, scale_factors)
-	ax.plot(x, y, z, color = auxiliary_color, linewidth = 2)
-
-def plot_vector(radius, center, vec, ax, scale_factors, color):
-	v = vec * scale_factors
-	ax.quiver(*center, *v, colors = color, length = radius)
-
-
-
-
 def plot_focal_mechanisms(data_list, ax = None, degrees = True, **kwargs):
 	'''kwargs:
 			degrees: True or False (default True).
@@ -174,7 +148,8 @@ def plot_focal_mechanisms(data_list, ax = None, degrees = True, **kwargs):
 		for label, color in zip(kwargs['vector_plots'], kwargs['vector_colors']):
 			ax.plot([], [], label = label, color = color)
 		plt.legend()
-def focal_mechanism(fm, ax, scale_factors, bottom_half = False,
+	return ax
+def focal_mechanism(fm, ax, axis_ratios, bottom_half = False,
 					alpha = .75, points = 20, plot_planes = True, vector_plots = [], vector_colors = [],
 					print_vecs = False, shade = True):
 	'''radius determines the size of the beach ball, center is a list of x,y,z coordinates
@@ -186,41 +161,25 @@ def focal_mechanism(fm, ax, scale_factors, bottom_half = False,
 	Strike is 0 to 360 degrees. Dip is 0 to 90 degrees. Rake is between -180 and 180 degrees.
 	'''
 	radius = fm.magnitude
-	center = fm.location
+	scale_factors = [radius * x for x in axis_ratios]
 	colors, quads = fm_points(fm, points)
 	for color, quad in zip(colors, quads):
-		x, y, z = quad
+		coords = quad
 
-
-		#remove the top half of the sphere
-		if bottom_half:
-			#for each point, determine if the line between the point above it
-			#and/or to the left (in the grid, not in xyz space), crosses
-			#the xy plane.
-			for i in range(points):
-				for j in range(points):
-					if i != 0 and z[i, j] * z[i - 1, j] < 0:
-						shorten_line(x, y, z, i, j, i - 1, j)
-					if j != 0 and z[i, j] * z[i, j - 1] < 0:
-						shorten_line(x, y, z, i, j, i, j - 1)
-					  
-			x[np.where(z > 0)] = np.nan
-
-		#multiply by radius to resize, by scale_factors to compensate for axis size differences, and add center
-		#coordinates to translate to the correct location
-		x = x * radius * scale_factors[0] + center[0]
-		y = y * radius * scale_factors[1] + center[1]
-		z = z * radius * scale_factors[2] + center[2]
+		if bottom_half: 		#remove the top half of the sphere
+			coords = remove_top(coords)
+	
+		x, y, z = translate_and_scale(coords, fm.location, scale_factors)
 
 		# return x, y, z
 		ax.plot_surface(x, y, z, color=color, linewidth=0, alpha = alpha, shade = shade)
 
 	if plot_planes:
-		plot_circle(fm, ax, scale_factors)
+		plot_circle(fm, ax, axis_ratios)
 
 	for vectype, c in zip(vector_plots, vector_colors):
 		vec = fm.vectors[vectype]
-		plot_vector(radius, center, vec, ax, scale_factors, c)
+		plot_vector(radius, fm.location, vec, ax, axis_ratios, c)
 	
 
 

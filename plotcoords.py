@@ -1,6 +1,9 @@
 import numpy as np
 from math import isclose
 
+'''Functions in this module are intended to return relative coordinates (i.e. centered at the origin, with a radius of 1),
+except for translate_and_scale, which can be used to move and stretch the coordinates so they are in absolute form.'''
+
 def circle_arc(axis1, axis2, start_angle, end_angle, points = 50):
 	'''Generates xyz coordinates for an arc of a circle. The vectors axis1
 	and axis2 must be perpendicular and in the plane of the circle.
