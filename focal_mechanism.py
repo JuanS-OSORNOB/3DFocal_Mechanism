@@ -43,7 +43,20 @@ class FocalMechanism(Event):
 	def __init__(self, longitude, latitude, altitude, magnitude, strike, dip, rake, projection = 'equirectangular', in_degrees = True):
 		super().__init__(longitude, latitude, altitude, magnitude, projection)
 		if in_degrees:
+			if strike < 0 or strike > 360:
+				raise Exception('Expected strike between 0 and 360 degrees; got {}'.format(strike))
+			if dip < 0 or dip > 90:
+				raise Exception('Expected dip between 0 and 90 degrees; got {}'.format(dip))
+			if rake < -180 or rake > 180:
+				raise Exception('Expected rake between -180 and 180 degrees; got {}'.format(rake))
 			strike, dip, rake = [radians(angle) for angle in (strike, dip, rake)]
+		else:
+			if strike < 0 or strike > 2*np.pi:
+				raise Exception('Expected strike between 0 and 2*pi radians; got {}'.format(strike))
+			if dip < 0 or dip > np.pi/2:
+				raise Exception('Expected dip between 0 and pi/2 degrees; got {}'.format(dip))
+			if rake < -np.pi or rake > np.pi:
+				raise Exception('Expected rake between -pi and pi degrees; got {}'.format(rake))
 		self.strike = strike
 		self.dip = dip
 		self.rake = rake
@@ -134,7 +147,7 @@ class FocalMechanism(Event):
 
 def plot_focal_mechanisms(data_list, ax = None, in_degrees = True, **kwargs):
 	'''kwargs:
-			degrees: True or False (default True).
+			in_degrees: True or False (default True).
 				If True, strike, dip, and rake angles are given
 				in degrees. If False, they are given in radians.
 			bottom_half: True or False (default False).
