@@ -6,7 +6,7 @@ import pandas as pd
 import os, sys
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from math import radians, sin, cos, isclose
+from math import radians, sin, cos, isclose, degrees
 from vector_math import vec_to_angles, remove_top
 from plotcoords import fm_quadrant, fm_points, translate_and_scale
 from mpl_plots import plot_circle, plot_vector
@@ -60,7 +60,7 @@ class FocalMechanism(Event):
 			print(vecs_FM)
 	
 	def print_angles(self):
-		print('Strike: {}°, Dip: {}°, Rake: {}°'.format(self.strike, self.dip, self.rake))
+		print('Strike: {}°, Dip: {}°, Rake: {}°'.format(degrees(self.strike), degrees(self.dip), degrees(self.rake)))
 	
 	def calculate_vectors(self):
 		strike = self.strike
