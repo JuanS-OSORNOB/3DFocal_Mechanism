@@ -8,7 +8,8 @@ import os, sys
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from math import radians, sin, cos, isclose, asin, atan2
-from focal_mechanism import vectors, vec_to_angles, plot_focal_mechanisms
+from focal_mechanism import plot_focal_mechanisms
+from vector_math import vectors, vec_to_angles
 
 parser = argparse.ArgumentParser(description='Plot 3D focal mechanisms')
 parser. add_argument('filename', nargs = '?')

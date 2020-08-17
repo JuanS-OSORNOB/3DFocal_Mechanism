@@ -14,22 +14,38 @@ from datautils import parse_file
 from mpl_plots import generate_scale_factors
 
 class Event(object):
-	def __init__(self, latitude, longitude, altitude, magnitude, projection = 'equirectangular'):
+	def __init__(self, longitude, latitude, altitude, magnitude, projection = 'equirectangular'):
 		self.projection = projection
 		self.magnitude = magnitude
 		if projection == 'equirectangular':
 			self.location = self.equirectangular_projection(latitude, longitude, altitude)
 	#There may be support for projections other than equirectangular in the future
 	def equirectangular_projection(self, latitude, longitude, altitude):
-		return (latitude, longitude, altitude)
+		return (longitude, latitude, altitude)
 
 class FocalMechanism(Event):
-	def __init__(self, latitude, longitude, altitude, magnitude, strike, dip, rake, projection = 'equirectangular', degrees = True):
-		super().__init__(latitude, longitude, altitude, magnitude, projection)
+	'''This is an earthquake event at a particular location in xyz space, with a magnitude and strike, dip, and rake angles.
+	A set of vectors that characterizes the focal mechanism is derived from the strike, dip, and rake angles.
+	Currently, longitude, latitude, and altitude are converted to x, y, and z, respectively, as in an equirectangular map
+	projection. The positive x-axis points east, the positive y-axis points north, and the positive z-axis points up. 
+	The magnitude of the earthquake is used to determine the radius of the focal mechanism plot. The strike vector represents the direction
+	of the fault in the xy-plane. It is defined such that the dip is downward and to the right 
+	(i.e. the hanging wall is on the right) when looking in the direction of the strike vector. The strike angle is the angle between 
+	the y-axis (north) and the strike vector, measured in the clockwise direction. The dip vector is perpendicular to the strike
+	vector and defines how the fault plane angles down from the xy-plane. The dip angle is measured from the vector in the xy-plane that 
+	is 90 degrees clockwise from the strike vector. 0 degrees represents a dip vector that is in the xy-plane, while 90 degrees represents a
+	dip vector that points straight down. The rake vector is in the plane defined by the strike and dip vectors and represents the 
+	direction of movement of the hanging wall. 0 degrees of rake represents movement in the direction of the strike, while -90 degrees
+	represents movement in the direction of the dip.
+	
+	Strike is 0 to 360 degrees. Dip is 0 to 90 degrees. Rake is between -180 and 180 degrees.'''
+
+	def __init__(self, longitude, latitude, altitude, magnitude, strike, dip, rake, projection = 'equirectangular', in_degrees = True):
+		super().__init__(longitude, latitude, altitude, magnitude, projection)
 		self.strike = strike
 		self.dip = dip
 		self.rake = rake
-		self.vectors = self.calculate_vectors((strike, dip, rake), degrees = degrees)
+		self.vectors = self.calculate_vectors((strike, dip, rake), degrees = in_degrees)
 
 	def print_vectors(self):
 		'''Takes a dict of xyz vectors, prints the vector type, xyz vector, and plunge/bearing format.'''
@@ -115,7 +131,7 @@ class FocalMechanism(Event):
 				'P': p_vector,
 				'T': t_vector}
 
-def plot_focal_mechanisms(data_list, ax = None, degrees = True, **kwargs):
+def plot_focal_mechanisms(data_list, ax = None, in_degrees = True, **kwargs):
 	'''kwargs:
 			degrees: True or False (default True).
 				If True, strike, dip, and rake angles are given
@@ -138,18 +154,18 @@ def plot_focal_mechanisms(data_list, ax = None, degrees = True, **kwargs):
 		ax = fig.add_subplot(111, projection = '3d')
 	focalmechanisms = []
 	for magnitude, location, angles in data_list:
-		focalmechanisms.append(FocalMechanism(*location, magnitude, *angles, degrees = degrees))
+		focalmechanisms.append(FocalMechanism(*location, magnitude, *angles, in_degrees = in_degrees))
 
 	scale_factors = generate_scale_factors(focalmechanisms, ax)
 	for fm in focalmechanisms:
-		focal_mechanism(fm, ax, scale_factors, **kwargs)
+		plot_focal_mechanism(fm, ax, scale_factors, **kwargs)
 	if 'vector_plots' in kwargs:
 		#make proxy legend
 		for label, color in zip(kwargs['vector_plots'], kwargs['vector_colors']):
 			ax.plot([], [], label = label, color = color)
 		plt.legend()
 	return ax
-def focal_mechanism(fm, ax, axis_ratios, bottom_half = False,
+def plot_focal_mechanism(fm, ax, axis_ratios, bottom_half = False,
 					alpha = .75, points = 20, plot_planes = True, vector_plots = [], vector_colors = [],
 					print_vecs = False, shade = True):
 	'''radius determines the size of the beach ball, center is a list of x,y,z coordinates

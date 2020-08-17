@@ -7,7 +7,7 @@ import os
 import unittest
 import numpy as np
 from profile_example import example
-from focal_mechanism import focal_mechanism, plot_focal_mechanisms, FocalMechanism
+from focal_mechanism import plot_focal_mechanism, plot_focal_mechanisms, FocalMechanism
 from plotcoords import fm_quadrant, translate_and_scale
 
 
@@ -41,7 +41,7 @@ class test_single_fm(unittest.TestCase):
                 fig = plt.figure()
                 ax = fig.add_subplot(111, projection = '3d')
                 fm = FocalMechanism(0, 0, 0, 1, s, d, r)
-                focal_mechanism(fm, ax, [1, 1, 1], shade = False)
+                plot_focal_mechanism(fm, ax, [1, 1, 1], shade = False)
                 fig.savefig(act_img)
                 plt.close(fig)
                 diff = compare_images(exp_img, act_img, .01)
@@ -64,7 +64,7 @@ class test_plot_multi(imgTest):
         self.ax = self.fig.add_subplot(111, projection = '3d')
 
     def test_radians(self):
-        plot_focal_mechanisms(self.data_list_rad, self.ax, degrees = False, alpha = .5)
+        plot_focal_mechanisms(self.data_list_rad, self.ax, in_degrees = False, alpha = .5)
         self.img_comp(self.fig, 'rad_test.png', .1)
 
     def test_vectors(self):
