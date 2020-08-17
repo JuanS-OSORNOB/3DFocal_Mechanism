@@ -1,6 +1,6 @@
 import numpy as np
-from plotcoords import circle_arc, translate_and_scale
-
+from plotcoords import circle_arc, translate_and_scale, fm_points
+from vector_math import remove_top
 def generate_scale_factors(focalmechanisms, ax):
 	'''plot everything else before running this function, or the axis limits
 	may change and the focal mechanisms may not look spherical.'''
@@ -75,3 +75,30 @@ def plot_circle(focalmechanism, ax, axis_ratios, fault_color = 'black', auxiliar
 def plot_vector(radius, center, vec, ax, scale_factors, color):
 	v = vec * scale_factors
 	ax.quiver(*center, *v, colors = color, length = radius)
+
+def plot_focal_mechanism(fm, ax, axis_ratios, bottom_half = False,
+					plot_planes = True, vector_plots = [], vector_colors = [],
+					print_vecs = False, points = 20, **kwargs):
+	'''Plots a single focal mechanism on a given matplotlib Axes instance.'''
+	default_kwargs = {'alpha': .75, 'shade': True, 'linewidth': 0}
+	default_kwargs.update(kwargs)
+	radius = fm.magnitude
+	scale_factors = [radius * x for x in axis_ratios]
+	colors, quads = fm_points(fm, points)
+	for color, quad in zip(colors, quads):
+		coords = quad
+
+		if bottom_half: 		#remove the top half of the sphere
+			coords = remove_top(coords)
+	
+		x, y, z = translate_and_scale(coords, fm.location, scale_factors)
+
+		# return x, y, z
+		ax.plot_surface(x, y, z, color=color, **default_kwargs)
+
+	if plot_planes:
+		plot_circle(fm, ax, axis_ratios)
+
+	for vectype, c in zip(vector_plots, vector_colors):
+		vec = fm.vectors[vectype]
+		plot_vector(radius, fm.location, vec, ax, axis_ratios, c)

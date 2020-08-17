@@ -7,9 +7,9 @@ import os
 import unittest
 import numpy as np
 from profile_example import example
-from focal_mechanism import plot_focal_mechanism, plot_focal_mechanisms, FocalMechanism
+from focal_mechanism import plot_focal_mechanisms, FocalMechanism
 from plotcoords import fm_quadrant, translate_and_scale
-
+from mpl_plots import plot_focal_mechanism
 
 if not os.path.isdir('actual_images'):
     os.mkdir('actual_images')

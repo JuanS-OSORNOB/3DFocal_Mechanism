@@ -11,7 +11,7 @@ from vector_math import vec_to_angles, remove_top
 from plotcoords import fm_quadrant, fm_points, translate_and_scale
 from mpl_plots import plot_circle, plot_vector
 from datautils import parse_file
-from mpl_plots import generate_scale_factors
+from mpl_plots import generate_scale_factors, plot_focal_mechanism
 
 class Event(object):
 	def __init__(self, longitude, latitude, altitude, magnitude, projection = 'equirectangular'):
@@ -179,40 +179,7 @@ def plot_focal_mechanisms(data_list, ax = None, in_degrees = True, **kwargs):
 			ax.plot([], [], label = label, color = color)
 		plt.legend()
 	return ax
-def plot_focal_mechanism(fm, ax, axis_ratios, bottom_half = False,
-					plot_planes = True, vector_plots = [], vector_colors = [],
-					print_vecs = False, points = 20, **kwargs):
-	'''radius determines the size of the beach ball, center is a list of x,y,z coordinates
-	for the center of the beach ball, angles is a list of the strike, dip, and slip angles,
-	scale_factors is a list of the proportions to scale the x, y, and z coordinates by to compensate
-	for differences in the axes, and degrees is a flag that should be set to True if the strike, dip,
-	and slip angles are in degrees and False if they are in radians.
-	
-	Strike is 0 to 360 degrees. Dip is 0 to 90 degrees. Rake is between -180 and 180 degrees.
-	'''
-	default_kwargs = {'alpha': .75, 'shade': True, 'linewidth': 0}
-	default_kwargs.update(kwargs)
-	radius = fm.magnitude
-	scale_factors = [radius * x for x in axis_ratios]
-	colors, quads = fm_points(fm, points)
-	for color, quad in zip(colors, quads):
-		coords = quad
 
-		if bottom_half: 		#remove the top half of the sphere
-			coords = remove_top(coords)
-	
-		x, y, z = translate_and_scale(coords, fm.location, scale_factors)
-
-		# return x, y, z
-		ax.plot_surface(x, y, z, color=color, **default_kwargs)
-
-	if plot_planes:
-		plot_circle(fm, ax, axis_ratios)
-
-	for vectype, c in zip(vector_plots, vector_colors):
-		vec = fm.vectors[vectype]
-		plot_vector(radius, fm.location, vec, ax, axis_ratios, c)
-	
 
 
 
