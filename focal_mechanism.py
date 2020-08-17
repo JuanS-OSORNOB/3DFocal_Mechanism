@@ -167,8 +167,8 @@ def plot_focal_mechanisms(data_list, ax = None, in_degrees = True, **kwargs):
 		plt.legend()
 	return ax
 def plot_focal_mechanism(fm, ax, axis_ratios, bottom_half = False,
-					alpha = .75, points = 20, plot_planes = True, vector_plots = [], vector_colors = [],
-					print_vecs = False, shade = True):
+					plot_planes = True, vector_plots = [], vector_colors = [],
+					print_vecs = False, points = 20, **kwargs):
 	'''radius determines the size of the beach ball, center is a list of x,y,z coordinates
 	for the center of the beach ball, angles is a list of the strike, dip, and slip angles,
 	scale_factors is a list of the proportions to scale the x, y, and z coordinates by to compensate
@@ -177,6 +177,8 @@ def plot_focal_mechanism(fm, ax, axis_ratios, bottom_half = False,
 	
 	Strike is 0 to 360 degrees. Dip is 0 to 90 degrees. Rake is between -180 and 180 degrees.
 	'''
+	default_kwargs = {'alpha': .75, 'shade': True, 'linewidth': 0}
+	default_kwargs.update(kwargs)
 	radius = fm.magnitude
 	scale_factors = [radius * x for x in axis_ratios]
 	colors, quads = fm_points(fm, points)
@@ -189,7 +191,7 @@ def plot_focal_mechanism(fm, ax, axis_ratios, bottom_half = False,
 		x, y, z = translate_and_scale(coords, fm.location, scale_factors)
 
 		# return x, y, z
-		ax.plot_surface(x, y, z, color=color, linewidth=0, alpha = alpha, shade = shade)
+		ax.plot_surface(x, y, z, color=color, **default_kwargs)
 
 	if plot_planes:
 		plot_circle(fm, ax, axis_ratios)
