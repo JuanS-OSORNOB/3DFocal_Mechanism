@@ -42,10 +42,12 @@ class FocalMechanism(Event):
 
 	def __init__(self, longitude, latitude, altitude, magnitude, strike, dip, rake, projection = 'equirectangular', in_degrees = True):
 		super().__init__(longitude, latitude, altitude, magnitude, projection)
+		if in_degrees:
+			strike, dip, rake = [radians(angle) for angle in (strike, dip, rake)]
 		self.strike = strike
 		self.dip = dip
 		self.rake = rake
-		self.vectors = self.calculate_vectors((strike, dip, rake), degrees = in_degrees)
+		self.vectors = self.calculate_vectors()
 
 	def print_vectors(self):
 		'''Takes a dict of xyz vectors, prints the vector type, xyz vector, and plunge/bearing format.'''
@@ -60,11 +62,10 @@ class FocalMechanism(Event):
 	def print_angles(self):
 		print('Strike: {}°, Dip: {}°, Rake: {}°'.format(self.strike, self.dip, self.rake))
 	
-	def calculate_vectors(self, angles, degrees = True):
-		if degrees:
-			strike, dip, rake = [radians(x) for x in angles]
-		else:
-			strike, dip, rake = angles
+	def calculate_vectors(self):
+		strike = self.strike
+		dip = self.dip
+		rake = self.rake
 
 		strike_vector = np.array([sin(strike),
 								cos(strike),
