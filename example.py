@@ -10,6 +10,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from math import radians, sin, cos, isclose, asin, atan2
 from focal_mechanism import plot_focal_mechanisms
 from vector_math import vectors, vec_to_angles
+from datautils import readingfile
 
 parser = argparse.ArgumentParser(description='Plot 3D focal mechanisms')
 parser. add_argument('filename', nargs = '?')
@@ -20,15 +21,9 @@ args = parser.parse_args()
 ''' EXAMPLE: Importing an Excel FMS dataframe. Creating your beachball list. 
 And obtaining the axes' bearing and plunge values in order to plot them on a stereonet.'''
 
-def readingpath(path, file):
-	file=os.path.join(path, file)
-	if not os.path.isfile(file):
-		sys.exit('File(s) missing:'+file)
-	return file
-
 workingdir='.'
 path=workingdir
-focalmechanismdir=readingpath(path, 'FMS.xlsx')
+focalmechanismdir=readingfile(path, 'FMS.xlsx')
 
 data_FM=pd.read_excel(focalmechanismdir, sheet_name='FMS')
 df_FM=pd.DataFrame(data_FM, columns=['Longitude (°)', 'Latitude (°)', 'Depth (km)', 'Magnitude (Mw)', 'Strike 1', 'Dip 1', 'Rake 1', 'Strike 2', 'Dip 2', 'Rake 2', 'Area', 'Date'])

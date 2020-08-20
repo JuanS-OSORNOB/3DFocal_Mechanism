@@ -1,6 +1,7 @@
 import numpy as np
 from plotcoords import circle_arc, translate_and_scale, fm_points
 from vector_math import remove_top
+
 def generate_scale_factors(focalmechanisms, ax):
 	'''plot everything else before running this function, or the axis limits
 	may change and the focal mechanisms may not look spherical.'''

@@ -1,10 +1,10 @@
 import os, sys
 
-def readingfile(path, file):
-	file=os.path.join(path, file)
-	if not os.path.isfile(file):
-		sys.exit('File(s) missing:'+file)
-	return path, file
+def readingfile(path, filename):
+	f=os.path.join(path, filename)
+	if not os.path.isfile(f):
+		sys.exit('File(s) missing:'+f)
+	return f
 
 def createpath(directory):
 	if not os.path.isdir(directory):
