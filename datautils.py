@@ -1,6 +1,8 @@
-import os, sys
-
-def readingfile(path, filename):
+import os, sys, warnings
+import pandas as pd
+def readingfile(filename, path = None):
+	if path == None:
+		path = os.getcwd()
 	f=os.path.join(path, filename)
 	if not os.path.isfile(f):
 		sys.exit('File(s) missing:'+f)
@@ -11,20 +13,30 @@ def createpath(directory):
 		os.mkdir(directory)
 	return directory
 
-def parse_file(filename, header):
-	#parse tab-delimited file into floats
-	data = []
-	with open(filename) as f:
-		if header: #skip first line
-			headers = f.readline()
-		for line in f.readlines():
-			line = line.strip().split('\t')
-			line = [float(x) for x in line]
-			x, y, z = line[1:4]
-			
-			entry = [line[0], [x, y, -1*z], line[4:7]]
-			data.append(entry)
-	return data
+def load_data(filename, **kwargs):
+	filetype = kwargs.pop('filetype', None)
+
+	try:
+		if filetype == 'excel':
+			df = pd.read_excel(filename, **kwargs)
+		else:
+			df = pd.read_csv(filename, **kwargs)
+	except ValueError:
+		try:
+			df = pd.read_csv(filename, sep = None, engine = 'python', **kwargs)
+		except ValueError:
+			raise Exception('Could not find the appropriate number of columns. Try specifying the delimiter with the keyword sep.')
+
+	#reorder columns
+	if 'usecols' in kwargs:
+		columns = sorted(kwargs['usecols']) #this is the order that Pandas put the columns in
+		map_usecol_to_order = {col: num for num, col in enumerate(columns)} #which position the column number from kwargs['usecols'] is in
+		new_ordering = [map_usecol_to_order[col] for col in kwargs['usecols']]
+		colnames = [df.columns[i] for i in new_ordering]
+		df = df[colnames]
+	return df
+	
+
 
 
 def make_test_data():

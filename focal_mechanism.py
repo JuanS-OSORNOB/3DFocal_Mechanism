@@ -10,17 +10,16 @@ from math import radians, sin, cos, isclose, degrees
 from vector_math import vec_to_angles, remove_top
 from plotcoords import fm_quadrant, fm_points, translate_and_scale
 from mpl_plots import plot_circle, plot_vector
-from datautils import parse_file
 from mpl_plots import generate_scale_factors, plot_focal_mechanism
 
 class Event(object):
-	def __init__(self, longitude, latitude, altitude, magnitude, projection = 'equirectangular'):
+	def __init__(self, longitude, latitude, altitude, magnitude, other_params = None, projection = 'equirectangular'):
 		self.projection = projection
 		self.magnitude = magnitude
 		if projection == 'equirectangular':
-			self.location = self.equirectangular_projection(latitude, longitude, altitude)
+			self.location = self.equirectangular_projection(longitude, latitude, altitude)
 	#There may be support for projections other than equirectangular in the future
-	def equirectangular_projection(self, latitude, longitude, altitude):
+	def equirectangular_projection(self, longitude, latitude, altitude):
 		return (longitude, latitude, altitude)
 
 class FocalMechanism(Event):
@@ -40,7 +39,7 @@ class FocalMechanism(Event):
 	
 	Strike is 0 to 360 degrees. Dip is 0 to 90 degrees. Rake is between -180 and 180 degrees.'''
 
-	def __init__(self, longitude, latitude, altitude, magnitude, strike, dip, rake, projection = 'equirectangular', in_degrees = True):
+	def __init__(self, longitude, latitude, altitude, magnitude, strike, dip, rake, other_params = None, projection = 'equirectangular', in_degrees = True):
 		super().__init__(longitude, latitude, altitude, magnitude, projection)
 		if in_degrees:
 			if strike < 0 or strike > 360:

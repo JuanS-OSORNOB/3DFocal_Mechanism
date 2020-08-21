@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # Last revised: 08/06/20
 # (c) <Juan Sebastián Osorno Bolívar & Amy Teegarden>
-import argparse
 import numpy as np
 import pandas as pd
 import os, sys
@@ -12,18 +11,11 @@ from focal_mechanism import plot_focal_mechanisms
 from vector_math import vectors, vec_to_angles
 from datautils import readingfile
 
-parser = argparse.ArgumentParser(description='Plot 3D focal mechanisms')
-parser. add_argument('filename', nargs = '?')
-parser.add_argument('-r')
-
-args = parser.parse_args()
 #--------------------------------------------------------------------------------------------------------------------
 ''' EXAMPLE: Importing an Excel FMS dataframe. Creating your beachball list. 
 And obtaining the axes' bearing and plunge values in order to plot them on a stereonet.'''
 
-workingdir='.'
-path=workingdir
-focalmechanismdir=readingfile(path, 'FMS.xlsx')
+focalmechanismdir=readingfile('FMS.xlsx')
 
 data_FM=pd.read_excel(focalmechanismdir, sheet_name='FMS')
 df_FM=pd.DataFrame(data_FM, columns=['Longitude (°)', 'Latitude (°)', 'Depth (km)', 'Magnitude (Mw)', 'Strike 1', 'Dip 1', 'Rake 1', 'Strike 2', 'Dip 2', 'Rake 2', 'Area', 'Date'])
@@ -122,14 +114,9 @@ b_bearing2, b_plunge2, p_bearing2, p_plunge2, t_bearing2, t_plunge2=obtain_axes_
 AREA1_FM=df_FM[df_FM['Area'].eq(1)]
 AREA2_FM=df_FM[df_FM['Area'].eq(2)]
 
-if args.filename == None:
-	test_data = beachball_list
-	plot_test(test_data, lon, lat, depth)
-	plt.show()
-	plt.close('all')
-else:
-	data = parse_file
-	plot_focal_mechanisms(parse_file(args.filename, args.r))
-	plt.show()
-	plt.close('all')
+test_data = beachball_list
+plot_test(test_data, lon, lat, depth)
+plt.show()
+plt.close('all')
+
 

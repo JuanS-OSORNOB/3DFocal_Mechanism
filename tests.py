@@ -10,9 +10,9 @@ from profile_example import example
 from focal_mechanism import plot_focal_mechanisms, FocalMechanism
 from plotcoords import fm_quadrant, translate_and_scale
 from mpl_plots import plot_focal_mechanism
+from datautils import load_data, createpath
 
-if not os.path.isdir('actual_images'):
-    os.mkdir('actual_images')
+createpath('actual_images')
 
 class imgTest(unittest.TestCase):
     @classmethod
@@ -139,5 +139,16 @@ class test_top_removed(imgTest):
         self.ax.view_init(90, 270)
         self.img_comp(self.fig, 'top_removed2.png')
 
+class test_load_data(unittest.TestCase):
+    def test_col_order(self):
+        data = load_data('test_csv.csv', usecols = [0, 1, 2])
+        self.assertTrue(data.columns[0] == 'magnitude')
+        data = load_data('test_csv.csv', usecols = [2, 1, 0])
+        self.assertTrue(data.columns[0] == 'latitude')
+    def test_delimiter(self):
+        data = load_data('test_csv_tab.csv', usecols = [0, 1, 2])
+
+class test_load_fms(unittest.TestCase):
+    pass
 if __name__ == '__main__':
     unittest.main()
