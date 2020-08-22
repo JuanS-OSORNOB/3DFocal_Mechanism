@@ -1,16 +1,19 @@
-from matplotlib import pyplot as plt
-from matplotlib.testing.compare import compare_images
-from topoprofile import plot_profile
-import re
-from mpl_toolkits.mplot3d import Axes3D
 import os
 import unittest
+import re
+
+from matplotlib import pyplot as plt
+from matplotlib.testing.compare import compare_images
+from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
-from profile_example import example
-from focal_mechanism import plot_focal_mechanisms, FocalMechanism
-from plotcoords import fm_quadrant, translate_and_scale
-from mpl_plots import plot_focal_mechanism
-from datautils import load_data, createpath
+
+from focmech3d import load_events
+from focmech3d.profile_example import example
+from focmech3d.focal_mechanism import plot_focal_mechanisms, FocalMechanism
+from focmech3d.plotcoords import fm_quadrant, translate_and_scale
+from focmech3d.mpl_plots import plot_focal_mechanism
+from focmech3d.datautils import load_data, createpath
+from focmech3d.topoprofile import plot_profile
 
 createpath('actual_images')
 
