@@ -1,19 +1,16 @@
 #!/usr/bin/env python3
 # Last revised: 13/08/20
 # (c) <Juan Sebastián Osorno Bolívar & Amy Teegarden>
-import os
-import sys
-from math import radians, sin, cos, isclose, degrees
-
 import numpy as np
 import pandas as pd
+import os, sys
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-
-from .vector_math import vec_to_angles, remove_top
-from .plotcoords import fm_quadrant, fm_points, translate_and_scale
-from .mpl_plots import plot_circle, plot_vector
-from .mpl_plots import generate_scale_factors, plot_focal_mechanism
+from math import radians, sin, cos, isclose, degrees
+from vector_math import vec_to_angles, remove_top
+from plotcoords import fm_quadrant, fm_points, translate_and_scale
+from mpl_plots import plot_circle, plot_vector
+from mpl_plots import generate_scale_factors, plot_focal_mechanism
 
 class Event(object):
 	def __init__(self, longitude, latitude, altitude, magnitude, other_params = None, projection = 'equirectangular'):
