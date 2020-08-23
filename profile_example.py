@@ -1,6 +1,6 @@
-from .datautils import readingfile
-from .topoprofile import profile_view, in_bounds, plot_profile, plot_bounding_box, pltcolor, pltsize
-from .focal_mechanism import plot_focal_mechanisms
+from datautils import readingfile
+from topoprofile import profile_view, in_bounds, plot_profile, plot_bounding_box, pltcolor, pltsize
+from focal_mechanism import plot_focal_mechanisms
 import pandas as pd
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
