@@ -1,5 +1,6 @@
-import os, sys, warnings
+import os, sys
 import pandas as pd
+
 def readingfile(filename, path = None):
 	if path == None:
 		path = os.getcwd()

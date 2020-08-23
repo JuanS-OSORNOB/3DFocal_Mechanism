@@ -1,19 +1,29 @@
-from matplotlib import pyplot as plt
-from matplotlib.testing.compare import compare_images
-from topoprofile import plot_profile
-import re
-from mpl_toolkits.mplot3d import Axes3D
 import os
 import unittest
+import re
+import inspect
+
+from matplotlib import pyplot as plt
+from matplotlib.testing.compare import compare_images
+from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
+
+from focmech3d import load_events
+from focmech3d.focal_mechanism import plot_focal_mechanisms, FocalMechanism
+from focmech3d.plotcoords import fm_quadrant, translate_and_scale
+from focmech3d.mpl_plots import plot_focal_mechanism
+from focmech3d.datautils import load_data, createpath
+from focmech3d.topoprofile import plot_profile
 from profile_example import example
-from focal_mechanism import plot_focal_mechanisms, FocalMechanism
-from plotcoords import fm_quadrant, translate_and_scale
-from mpl_plots import plot_focal_mechanism
-from datautils import load_data, createpath
 
-createpath('actual_images')
+act_img_path = os.path.join(directory, 'actual_images')
+createpath(act_img_path)
+exp_img_path = os.path.join(directory, 'expected_images')
 
+def act_img(img_filename):
+    return os.path.join(act_img_path, img_filename)
+def exp_img(img_filename):
+    return os.path.join(exp_img_path, img_filename)
 class imgTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -23,9 +33,9 @@ class imgTest(unittest.TestCase):
             [2, [5, -5, -10], [90, 0, 100]],
             [10, [20, 20, -10], [359, 45, -100]]]
     def img_comp(self, fig, img_file, tolerance = .01):
-        actual = 'actual_images/{}'.format(img_file)
+        actual = act_img(img_file)
         fig.savefig(actual)
-        diff = compare_images('expected_images/{}'.format(img_file), actual, tolerance)
+        diff = compare_images(exp_img(img_file), actual, tolerance)
         plt.close(fig)
         self.assertIsNone(diff)
 
@@ -33,10 +43,10 @@ class test_single_fm(unittest.TestCase):
     def setUp(self):
         self.fregex = re.compile('strike(.+)_dip(.+)_rake(.+).png')
     def test_fms(self):
-        for f in os.listdir('expected_images/single_fms/'):
+        for f in os.listdir('tests/expected_images/single_fms/'):
             with self.subTest(f, f = f):
-                exp_img = 'expected_images/single_fms/{}'.format(f)
-                act_img = 'actual_images/{}'.format(f)
+                exp_img = 'tests/expected_images/single_fms/{}'.format(f)
+                act_img = 'tests/actual_images/{}'.format(f)
                 s, d, r = [int(x) for x in self.fregex.search(f).groups()]
                 fig = plt.figure()
                 ax = fig.add_subplot(111, projection = '3d')
@@ -76,13 +86,13 @@ class test_event_profile(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         fig1, fig2 = example(depth_mag = True, verbose = False, show_plots = False)
-        fig1.savefig('actual_images/3D Profile example.png')
-        fig2.savefig('actual_images/Plot profile example.png')
+        fig1.savefig('tests/actual_images/3D Profile example.png')
+        fig2.savefig('tests/actual_images/Plot profile example.png')
     def test_3D_profile(self):
-        diff = compare_images('expected_images/3D Profile example.png', 'actual_images/3D Profile example.png', .01)
+        diff = compare_images('tests/expected_images/3D Profile example.png', 'tests/actual_images/3D Profile example.png', .01)
         self.assertIsNone(diff)
     def test_2D_profile(self):
-        diff = compare_images('expected_images/Plot profile example.png', 'actual_images/Plot profile example.png', .01)
+        diff = compare_images('tests/expected_images/Plot profile example.png', 'tests/actual_images/Plot profile example.png', .01)
         self.assertIsNone(diff)
 
 class test_basic_profile(imgTest):
@@ -92,7 +102,7 @@ class test_basic_profile(imgTest):
     def test_profile2(self):
         fig = plot_profile(self.data_list, [],  50, 50, -10, -10, 20, 40, in_degrees = False, verbose = False)
         self.img_comp(fig, 'basic_profile2.png')
-        fig.savefig('actual_images/basic_profile2.png')
+        fig.savefig('tests/actual_images/basic_profile2.png')
     def test_profile3(self):
         fig = plot_profile(self.data_list, [], -10, 10, 25, 25, 20, 500, in_degrees = True, fm_size = 20, verbose = False)
         self.img_comp(fig, 'basic_profile3.png')
@@ -141,12 +151,12 @@ class test_top_removed(imgTest):
 
 class test_load_data(unittest.TestCase):
     def test_col_order(self):
-        data = load_data('test_csv.csv', usecols = [0, 1, 2])
+        data = load_data('tests/test_csv.csv', usecols = [0, 1, 2])
         self.assertTrue(data.columns[0] == 'magnitude')
-        data = load_data('test_csv.csv', usecols = [2, 1, 0])
+        data = load_data('tests/test_csv.csv', usecols = [2, 1, 0])
         self.assertTrue(data.columns[0] == 'latitude')
     def test_delimiter(self):
-        data = load_data('test_csv_tab.csv', usecols = [0, 1, 2])
+        data = load_data('tests/test_csv_tab.csv', usecols = [0, 1, 2])
 
 class test_load_fms(unittest.TestCase):
     pass

@@ -1,21 +1,26 @@
 #!/usr/bin/env python3
 # Last revised: 08/06/20
 # (c) <Juan Sebastián Osorno Bolívar & Amy Teegarden>
+import os, sys, inspect
+from math import radians, sin, cos, isclose, asin, atan2
+
 import numpy as np
 import pandas as pd
-import os, sys
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from math import radians, sin, cos, isclose, asin, atan2
-from focal_mechanism import plot_focal_mechanisms
-from vector_math import vectors, vec_to_angles
-from datautils import readingfile
+
+from focmech3d.focal_mechanism import plot_focal_mechanisms
+from focmech3d.vector_math import vectors, vec_to_angles
+from focmech3d.datautils import readingfile
 
 #--------------------------------------------------------------------------------------------------------------------
 ''' EXAMPLE: Importing an Excel FMS dataframe. Creating your beachball list. 
 And obtaining the axes' bearing and plunge values in order to plot them on a stereonet.'''
 
-focalmechanismdir=readingfile('FMS.xlsx')
+directory = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
+print(directory)
+focalmechanismdir=readingfile(os.path.join(directory, 'FMS.xlsx'))
+
 
 data_FM=pd.read_excel(focalmechanismdir, sheet_name='FMS')
 df_FM=pd.DataFrame(data_FM, columns=['Longitude (°)', 'Latitude (°)', 'Depth (km)', 'Magnitude (Mw)', 'Strike 1', 'Dip 1', 'Rake 1', 'Strike 2', 'Dip 2', 'Rake 2', 'Area', 'Date'])

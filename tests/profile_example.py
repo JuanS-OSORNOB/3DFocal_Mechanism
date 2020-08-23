@@ -1,19 +1,24 @@
-from datautils import readingfile
-from topoprofile import profile_view, in_bounds, plot_profile, plot_bounding_box, pltcolor, pltsize
-from focal_mechanism import plot_focal_mechanisms
+import inspect, os
+
 import pandas as pd
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
+
+from focmech3d.datautils import readingfile
+from focmech3d.topoprofile import profile_view, in_bounds, plot_profile, plot_bounding_box, pltcolor, pltsize
+from focmech3d.focal_mechanism import plot_focal_mechanisms
+
+directory = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
 
 def example(depth_mag=True, verbose = True, show_plots = False):
 	'''Example function. It plots the 3D FMS and events inside the bounding box of the profile chosen.
 	depth_mag parameter default as True. Please refer to plot_profile function for more details.'''
 
 	#CREATING BEACHBALL LIST
-	focalmechanismdir=readingfile('FMS.xlsx')
+	fm_file=readingfile(os.path.join(directory, 'FMS.xlsx'))
 	
-	data_FM=pd.read_excel(focalmechanismdir, sheet_name='FMS')
+	data_FM=pd.read_excel(fm_file, sheet_name='FMS')
 	df_FM=pd.DataFrame(data_FM, columns=['Longitude (°)', 'Latitude (°)', 'Depth (km)', 'Magnitude (Mw)', 'Strike 1', 'Dip 1', 'Rake 1', 'Strike 2', 'Dip 2', 'Rake 2', 'Area', 'Date'])
 	
 	mag_FM, lon, lat, depth, center_FM, nodal_plane1=[], [], [], [], [], []

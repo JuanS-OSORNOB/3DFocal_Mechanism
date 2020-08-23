@@ -1,0 +1,13 @@
+README.md
+setup.py
+focmech3d/__init__.py
+focmech3d/datautils.py
+focmech3d/focal_mechanism.py
+focmech3d/mpl_plots.py
+focmech3d/plotcoords.py
+focmech3d/topoprofile.py
+focmech3d/vector_math.py
+focmech3d.egg-info/PKG-INFO
+focmech3d.egg-info/SOURCES.txt
+focmech3d.egg-info/dependency_links.txt
+focmech3d.egg-info/top_level.txt

@@ -1,14 +1,15 @@
-from focal_mechanism import plot_focal_mechanisms, plot_vector
+from math import isclose, atan2, sqrt
+import os, sys
+
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
-from math import isclose, atan2, sqrt
-import os, sys
 import pandas as pd
-from matplotlib.testing.compare import compare_images
-from vector_math import translate_rotate_point, normalize_vector, angle_between, circle_angle, vectors
-from plotcoords import circle_arc
-from mpl_plots import generate_scale_factors
+
+from focmech3d.focal_mechanism import plot_focal_mechanisms, plot_vector
+from focmech3d.vector_math import translate_rotate_point, normalize_vector, angle_between, circle_angle, vectors
+from focmech3d.plotcoords import circle_arc
+from focmech3d.mpl_plots import generate_scale_factors
 
 def lambert_projection(point, center_point, new_x_axis, new_y_axis):
 	'''Generates the Lambert azimuthal equal-area projection of a point on a sphere
