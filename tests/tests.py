@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+# Last revised: 08/23/20
+# (c) <Juan Sebastián Osorno Bolívar & Amy Teegarden>
+
 import os
 import unittest
 import re
@@ -16,6 +20,7 @@ from focmech3d.datautils import load_data, createpath
 from focmech3d.topoprofile import plot_profile
 from profile_example import example
 
+directory = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
 act_img_path = os.path.join(directory, 'actual_images')
 createpath(act_img_path)
 exp_img_path = os.path.join(directory, 'expected_images')

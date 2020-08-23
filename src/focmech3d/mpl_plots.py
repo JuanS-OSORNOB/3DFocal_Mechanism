@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# Last revised: 08/23/20
+# (c) <Juan Sebastián Osorno Bolívar & Amy Teegarden>
 import numpy as np
 from focmech3d.plotcoords import circle_arc, translate_and_scale, fm_points
 from focmech3d.vector_math import remove_top

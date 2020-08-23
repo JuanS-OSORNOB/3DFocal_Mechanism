@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# Last revised: 08/23/20
+# (c) <Juan Sebastián Osorno Bolívar & Amy Teegarden>
 from math import isclose, atan2, sqrt
 import os, sys
 

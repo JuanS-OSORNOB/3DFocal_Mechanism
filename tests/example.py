@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Last revised: 08/06/20
+# Last revised: 08/23/20
 # (c) <Juan Sebastián Osorno Bolívar & Amy Teegarden>
 import os, sys, inspect
 from math import radians, sin, cos, isclose, asin, atan2
@@ -17,8 +17,8 @@ from focmech3d.datautils import readingfile
 ''' EXAMPLE: Importing an Excel FMS dataframe. Creating your beachball list. 
 And obtaining the axes' bearing and plunge values in order to plot them on a stereonet.'''
 
+#This is just to make sure the script can find the companion file used in the example.
 directory = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
-print(directory)
 focalmechanismdir=readingfile(os.path.join(directory, 'FMS.xlsx'))
 
 

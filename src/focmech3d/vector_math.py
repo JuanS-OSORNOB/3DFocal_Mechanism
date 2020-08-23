@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# Last revised: 08/23/20
+# (c) <Juan Sebastián Osorno Bolívar & Amy Teegarden>
 import numpy as np
 from math import isclose, radians, sin, cos, atan2, asin
 
