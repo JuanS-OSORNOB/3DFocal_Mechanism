@@ -8,10 +8,12 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.testing.compare import compare_images
 
 from focmech3d.focal_mechanism import plot_focal_mechanisms
 from focmech3d.vector_math import vectors, vec_to_angles
 from focmech3d.datautils import readingfile
+from focmech3d import load_fms
 
 #--------------------------------------------------------------------------------------------------------------------
 ''' EXAMPLE: Importing an Excel FMS dataframe. Creating your beachball list. 
@@ -20,9 +22,13 @@ And obtaining the axes' bearing and plunge values in order to plot them on a ste
 #This is just to make sure the script can find the companion file used in the example.
 directory = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
 focalmechanismdir=readingfile(os.path.join(directory, 'FMS.xlsx'))
+def filepath(filename):
+	return os.path.join(directory, filename)
+def savefig(fig, filename):
+	fig.savefig(os.path.join(directory, filename))
 
+data_FM = pd.read_excel(focalmechanismdir)
 
-data_FM=pd.read_excel(focalmechanismdir, sheet_name='FMS')
 df_FM=pd.DataFrame(data_FM, columns=['Longitude (°)', 'Latitude (°)', 'Depth (km)', 'Magnitude (Mw)', 'Strike 1', 'Dip 1', 'Rake 1', 'Strike 2', 'Dip 2', 'Rake 2', 'Area', 'Date'])
 
 mag_FM, lon, lat, depth, center_FM, nodal_plane1=[], [], [], [], [], []
@@ -41,9 +47,10 @@ for i, row in df_FM.iterrows():
 		nodal_plane1.append([s_FM, d_FM, r_FM])
 #Insert beachball list=[[R1, [X1,Y1,Z1], [S1, D1, R1]],[[R2, [X2,Y2,Z2], [S2, D2, R2]],...,[[Ri, [Xi,Yi,Zi], [Si, Di, Ri]]] from i=1 to n number of FMS.
 beachball_list=[]
+data_FM=load_fms(focalmechanismdir, filetype = 'excel', usecols = [4, 3, 13, 12, 5, 6, 7])
 for i in range(0,len(mag_FM)):
 	beachball_list.append([mag_FM[i], center_FM[i], nodal_plane1[i]])
-print('Total number of events:', len(beachball_list))
+print('Total number of events:', len(data_FM))
 
 def plot_test(test_data, lon, lat, depth):
 	fig = plt.figure()
@@ -58,6 +65,7 @@ def plot_test(test_data, lon, lat, depth):
 						  vector_plots = ['strike', 'dip', 'rake', 'normal', 'B', 'P', 'T']
 						  , vector_colors = ['blue', 'green', 'brown', 'black', 'purple', 'gray', 'red'],
 						  print_vecs = True, bottom_half=False)
+	savefig(fig, 'example1_TEST.png')
 
 	fig = plt.figure()
 	ax = fig.add_subplot(111, projection = '3d')
@@ -72,7 +80,8 @@ def plot_test(test_data, lon, lat, depth):
 						  vector_plots = ['strike', 'dip', 'rake', 'normal', 'B', 'P', 'T']
 						  , vector_colors = ['blue', 'green', 'brown', 'black', 'purple', 'gray', 'red'],
 						  bottom_half = True)
-
+	ax.view_init(90,270)
+	savefig(fig, 'example2_TEST.png')
 '''If you would like to use the second nodal plane it is also possible. 
 Whichever you use can yield the correct 3D and stereonet plots, as nodal planes are perpendicular.'''
 strike2=df_FM['Strike 2'].values.tolist()
@@ -121,6 +130,10 @@ AREA2_FM=df_FM[df_FM['Area'].eq(2)]
 
 test_data = beachball_list
 plot_test(test_data, lon, lat, depth)
+diff = compare_images(filepath('example1.png'), filepath('example1_TEST.png'), .01)
+print(diff)
+diff = compare_images(filepath('example2.png'), filepath('example2_TEST.png'), .01)
+print(diff)
 plt.show()
 plt.close('all')
 

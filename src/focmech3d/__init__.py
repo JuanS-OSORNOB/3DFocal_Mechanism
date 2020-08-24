@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+# Last revised: 08/23/20
+# (c) <Juan Sebastián Osorno Bolívar & Amy Teegarden>
+
 from focmech3d.datautils import load_data
 from focmech3d.focal_mechanism import FocalMechanism, Event
 

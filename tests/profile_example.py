@@ -21,6 +21,7 @@ def example(depth_mag=True, verbose = True, show_plots = False):
 
 	#CREATING BEACHBALL LIST
 	fm_file=readingfile(os.path.join(directory, 'FMS.xlsx'))
+	ev_file=readingfile(os.path.join(directory, 'Events.xlsx'))
 	
 	data_FM=pd.read_excel(fm_file, sheet_name='FMS')
 	df_FM=pd.DataFrame(data_FM, columns=['Longitude (°)', 'Latitude (°)', 'Depth (km)', 'Magnitude (Mw)', 'Strike 1', 'Dip 1', 'Rake 1', 'Strike 2', 'Dip 2', 'Rake 2', 'Area', 'Date'])
@@ -63,8 +64,7 @@ def example(depth_mag=True, verbose = True, show_plots = False):
 	#plot_focal_mechanisms(beachball_list, ax, alpha=0.5)
 
 	#Plot the events and the focal mechanisms inside profile volume
-	events_dir=readingfile('Events.xlsx')
-	data_events=pd.read_excel(events_dir)
+	data_events=pd.read_excel(ev_file)
 	df_events=pd.DataFrame(data_events, columns=['latitude', 'longitude', 'depth', 'mag'])
 
 	lon=df_events['longitude'].values.tolist()

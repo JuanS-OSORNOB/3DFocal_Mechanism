@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Last revised: 13/08/20
+# Last revised: 08/23/20
 # (c) <Juan Sebastián Osorno Bolívar & Amy Teegarden>
 import os, sys
 from math import radians, sin, cos, isclose, degrees
@@ -14,7 +14,7 @@ from focmech3d.plotcoords import fm_quadrant, fm_points, translate_and_scale
 from focmech3d.mpl_plots import plot_circle, plot_vector, generate_scale_factors, plot_focal_mechanism
 
 class Event(object):
-	def __init__(self, longitude, latitude, altitude, magnitude, other_params = None, projection = 'equirectangular'):
+	def __init__(self, longitude, latitude, altitude, magnitude, *other_params, projection = 'equirectangular'):
 		self.projection = projection
 		self.magnitude = magnitude
 		if projection == 'equirectangular':
@@ -40,7 +40,7 @@ class FocalMechanism(Event):
 	
 	Strike is 0 to 360 degrees. Dip is 0 to 90 degrees. Rake is between -180 and 180 degrees.'''
 
-	def __init__(self, longitude, latitude, altitude, magnitude, strike, dip, rake, other_params = None, projection = 'equirectangular', in_degrees = True):
+	def __init__(self, longitude, latitude, altitude, magnitude, strike, dip, rake, *other_params, projection = 'equirectangular', in_degrees = True):
 		super().__init__(longitude, latitude, altitude, magnitude, projection)
 		if in_degrees:
 			if strike < 0 or strike > 360:
