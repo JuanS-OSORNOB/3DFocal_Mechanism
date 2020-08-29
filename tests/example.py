@@ -65,7 +65,6 @@ def plot_test(test_data, lon, lat, depth):
 						  vector_plots = ['strike', 'dip', 'rake', 'normal', 'B', 'P', 'T']
 						  , vector_colors = ['blue', 'green', 'brown', 'black', 'purple', 'gray', 'red'],
 						  print_vecs = True, bottom_half=False)
-	savefig(fig, 'example1_TEST.png')
 
 	fig = plt.figure()
 	ax = fig.add_subplot(111, projection = '3d')
@@ -81,7 +80,6 @@ def plot_test(test_data, lon, lat, depth):
 						  , vector_colors = ['blue', 'green', 'brown', 'black', 'purple', 'gray', 'red'],
 						  bottom_half = True)
 	ax.view_init(90,270)
-	savefig(fig, 'example2_TEST.png')
 '''If you would like to use the second nodal plane it is also possible. 
 Whichever you use can yield the correct 3D and stereonet plots, as nodal planes are perpendicular.'''
 strike2=df_FM['Strike 2'].values.tolist()
@@ -130,10 +128,6 @@ AREA2_FM=df_FM[df_FM['Area'].eq(2)]
 
 test_data = beachball_list
 plot_test(test_data, lon, lat, depth)
-diff = compare_images(filepath('example1.png'), filepath('example1_TEST.png'), .01)
-print(diff)
-diff = compare_images(filepath('example2.png'), filepath('example2_TEST.png'), .01)
-print(diff)
 plt.show()
 plt.close('all')
 

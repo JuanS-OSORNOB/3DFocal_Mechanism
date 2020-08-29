@@ -145,7 +145,7 @@ class FocalMechanism(Event):
 				'P': p_vector,
 				'T': t_vector}
 
-def plot_focal_mechanisms(data_list, ax = None, in_degrees = True, **kwargs):
+def plot_focal_mechanisms(data_list, ax = None, in_degrees = True, in_fms = False, **kwargs):
 	'''kwargs:
 			in_degrees: True or False (default True).
 				If True, strike, dip, and rake angles are given
@@ -167,8 +167,11 @@ def plot_focal_mechanisms(data_list, ax = None, in_degrees = True, **kwargs):
 		fig = plt.figure()
 		ax = fig.add_subplot(111, projection = '3d')
 	focalmechanisms = []
-	for magnitude, location, angles in data_list:
-		focalmechanisms.append(FocalMechanism(*location, magnitude, *angles, in_degrees = in_degrees))
+	if in_fms == False:
+		for magnitude, location, angles in data_list:
+			focalmechanisms.append(FocalMechanism(*location, magnitude, *angles, in_degrees = in_degrees))
+	else:
+		focalmechanisms = data_list
 
 	scale_factors = generate_scale_factors(focalmechanisms, ax)
 	for fm in focalmechanisms:

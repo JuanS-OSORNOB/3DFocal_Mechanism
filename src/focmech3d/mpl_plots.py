@@ -80,7 +80,7 @@ def plot_vector(radius, center, vec, ax, scale_factors, color):
 	v = vec * scale_factors
 	ax.quiver(*center, *v, colors = color, length = radius)
 
-def plot_focal_mechanism(fm, ax, axis_ratios, bottom_half = False,
+def plot_focal_mechanism(fm, ax, axis_ratios = [1, 1, 1], bottom_half = False,
 					plot_planes = True, vector_plots = [], vector_colors = [],
 					print_vecs = False, points = 20, **kwargs):
 	'''Plots a single focal mechanism on a given matplotlib Axes instance.'''

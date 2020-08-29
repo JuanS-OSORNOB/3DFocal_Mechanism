@@ -37,6 +37,12 @@ class imgTest(unittest.TestCase):
             [5, [-5, 10, -8], [280, 90, -30]],
             [2, [5, -5, -10], [90, 0, 100]],
             [10, [20, 20, -10], [359, 45, -100]]]
+        cls.data_list2 = [[0, 0, -6, 1, 0, 0, 0], 
+                        [-5, -5, -10, 3, 10, 30, 40], 
+                        [-5, 10, -8, 5, 280, 90, -30],
+                        [5, -5, -10, 2, 90, 0, 100],
+                        [20, 20, -10, 10, 359, 45, -100]]
+        cls.fms = [FocalMechanism(*data) for data in cls.data_list2]
     def img_comp(self, fig, img_file, tolerance = .01):
         actual = act_img(img_file)
         fig.savefig(actual)
@@ -65,16 +71,16 @@ class test_single_fm(unittest.TestCase):
 class test_plot_multi(imgTest):
 
     def setUp(self):
-        self.data_list = [[1, [0, 0, 0], [0, 0, 0]],
-            [3, [-5, -5, -5], [10, 30, 40]],
-            [5, [-5, 10, 0], [280, 90, -30]],
-            [2, [5, -5, -5], [90, 0, 100]],
-            [10, [20, 20, -20], [359, 45, -100]]]
-        self.data_list_rad = [[1, [0, 0, 0], [0, 0, 0]],
-            [3, [-5, -5, -5], [10 * np.pi/180, 30 * np.pi/180, 40 * np.pi/180]],
-            [5, [-5, 10, 0], [280 * np.pi/180, 90 * np.pi/180, -30 * np.pi/180]],
-            [2, [5, -5, -5], [90 * np.pi/180, 0, 100 * np.pi/180]],
-            [10, [20, 20, -20], [359 * np.pi/180, 45 * np.pi/180, -100 * np.pi/180]]]
+        self.data_list = [[1, [0, 0, -6], [0, 0, 0]],
+            [3, [-5, -5, -10], [10, 30, 40]],
+            [5, [-5, 10, -8], [280, 90, -30]],
+            [2, [5, -5, -10], [90, 0, 100]],
+            [10, [20, 20, -10], [359, 45, -100]]]
+        self.data_list_rad = [[1, [0, 0, -6], [0, 0, 0]],
+        [3, [-5, -5, -10], [10 * np.pi/180, 30 * np.pi/180, 40 * np.pi/180]],
+        [5, [-5, 10, -8], [280 * np.pi/180, 90 * np.pi/180, -30 * np.pi/180]],
+        [2, [5, -5, -10], [90 * np.pi/180, 0, 100 * np.pi/180]],
+        [10, [20, 20, -10], [359 * np.pi/180, 45 * np.pi/180, -100 * np.pi/180]]]
         self.fig = plt.figure()
         self.ax = self.fig.add_subplot(111, projection = '3d')
 
@@ -146,7 +152,7 @@ class test_coords(unittest.TestCase):
 
 class test_top_removed(imgTest):
     def setUp(self):
-        self.ax = plot_focal_mechanisms(self.data_list, bottom_half = True)
+        self.ax = plot_focal_mechanisms(self.fms, in_fms = True, bottom_half = True)
         self.fig = self.ax.get_figure()
     def test_top_removed_side_view(self):
         self.img_comp(self.fig, 'top_removed1.png')
@@ -162,6 +168,8 @@ class test_load_data(unittest.TestCase):
         self.assertTrue(data.columns[0] == 'latitude')
     def test_delimiter(self):
         data = load_data('tests/test_csv_tab.csv', usecols = [0, 1, 2])
+
+
 
 class test_load_fms(unittest.TestCase):
     pass
