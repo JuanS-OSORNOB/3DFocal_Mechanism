@@ -11,12 +11,14 @@ from mpl_toolkits.mplot3d import Axes3D
 
 from focmech3d.vector_math import vec_to_angles, remove_top
 from focmech3d.plotcoords import fm_quadrant, fm_points, translate_and_scale
-from focmech3d.mpl_plots import plot_circle, plot_vector, generate_scale_factors, plot_focal_mechanism
+from focmech3d.mpl_plots import plot_circle, plot_vector, generate_scale_factors, plot_focal_mechanism, get_data_limits
 
 class Event(object):
-	def __init__(self, longitude, latitude, altitude, magnitude, *other_params, projection = 'equirectangular'):
+	def __init__(self, longitude, latitude, altitude, magnitude, *other_params, projection = 'equirectangular', rad_function = lambda x: x):
+		'''Rad function is a function that takes the magnitude and turns it into a focal mechanism radius. By default, the magnitude is simply the radius.'''
 		self.projection = projection
 		self.magnitude = magnitude
+		self.radius = rad_function(magnitude)
 		if projection == 'equirectangular':
 			self.location = self.equirectangular_projection(longitude, latitude, altitude)
 	#There may be support for projections other than equirectangular in the future
@@ -40,8 +42,9 @@ class FocalMechanism(Event):
 	
 	Strike is 0 to 360 degrees. Dip is 0 to 90 degrees. Rake is between -180 and 180 degrees.'''
 
-	def __init__(self, longitude, latitude, altitude, magnitude, strike, dip, rake, *other_params, projection = 'equirectangular', in_degrees = True):
-		super().__init__(longitude, latitude, altitude, magnitude, projection)
+	def __init__(self, longitude, latitude, altitude, magnitude, strike, dip, rake, *other_params, projection = 'equirectangular', in_degrees = True,
+				rad_function = lambda x: x):
+		super().__init__(longitude, latitude, altitude, magnitude, projection = projection, rad_function = rad_function)
 		if in_degrees:
 			if strike < 0 or strike > 360:
 				raise Exception('Expected strike between 0 and 360 degrees; got {}'.format(strike))
@@ -182,7 +185,3 @@ def plot_focal_mechanisms(data_list, ax = None, in_degrees = True, in_fms = Fals
 			ax.plot([], [], label = label, color = color)
 		plt.legend()
 	return ax
-
-
-
-
