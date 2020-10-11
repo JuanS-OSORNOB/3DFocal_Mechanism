@@ -39,7 +39,8 @@ def load_data(filename, **kwargs):
 		new_ordering = [map_usecol_to_order[col] for col in kwargs['usecols']]
 		colnames = [df.columns[i] for i in new_ordering]
 		df = df[colnames]
-	return df
+		kwargs.pop('usecols')
+	return df, kwargs
 	
 
 

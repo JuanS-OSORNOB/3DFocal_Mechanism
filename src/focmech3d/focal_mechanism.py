@@ -14,11 +14,15 @@ from focmech3d.plotcoords import fm_quadrant, fm_points, translate_and_scale
 from focmech3d.mpl_plots import plot_circle, plot_vector, generate_scale_factors, plot_focal_mechanism, get_data_limits
 
 class Event(object):
-	def __init__(self, longitude, latitude, altitude, magnitude, *other_params, projection = 'equirectangular', rad_function = lambda x: x, colnames = []):
+	def __init__(self, longitude, latitude, altitude, magnitude, *other_params, projection = 'equirectangular', rad_function = lambda x: x, colnames = [],
+	invert_z = False):
 		'''Rad function is a function that takes the magnitude and turns it into a focal mechanism radius. By default, the magnitude is simply the radius.'''
 		self.projection = projection
 		self.magnitude = magnitude
 		self.radius = rad_function(magnitude)
+
+		if invert_z:
+			altitude *= -1
 		if projection == 'equirectangular':
 			self.location = self.equirectangular_projection(longitude, latitude, altitude)
 		if colnames:
@@ -33,7 +37,8 @@ class FocalMechanism(Event):
 	'''This is an earthquake event at a particular location in xyz space, with a magnitude and strike, dip, and rake angles.
 	A set of vectors that characterizes the focal mechanism is derived from the strike, dip, and rake angles.
 	Currently, longitude, latitude, and altitude are converted to x, y, and z, respectively, as in an equirectangular map
-	projection. The positive x-axis points east, the positive y-axis points north, and the positive z-axis points up. 
+	projection. The positive x-axis points east, the positive y-axis points north, and the positive z-axis points up. Set invert_z to True 
+	if the z-axis numbers represent depth rather than altitude (e.g. an event 30km deep has a z-value of 30 rather than -30 in the input data.)
 	The magnitude of the earthquake is used to determine the radius of the focal mechanism plot. The strike vector represents the direction
 	of the fault in the xy-plane. It is defined such that the dip is downward and to the right 
 	(i.e. the hanging wall is on the right) when looking in the direction of the strike vector. The strike angle is the angle between 
@@ -47,8 +52,8 @@ class FocalMechanism(Event):
 	Strike is 0 to 360 degrees. Dip is 0 to 90 degrees. Rake is between -180 and 180 degrees.'''
 
 	def __init__(self, longitude, latitude, altitude, magnitude, strike, dip, rake, *other_params, projection = 'equirectangular', in_degrees = True,
-				rad_function = lambda x: x, colnames = []):
-		super().__init__(longitude, latitude, altitude, magnitude, projection = projection, rad_function = rad_function)
+				rad_function = lambda x: x, colnames = [], invert_z = False):
+		super().__init__(longitude, latitude, altitude, magnitude, projection = projection, rad_function = rad_function, invert_z = invert_z)
 		if in_degrees:
 			if strike < 0 or strike > 360:
 				raise Exception('Expected strike between 0 and 360 degrees; got {}'.format(strike))

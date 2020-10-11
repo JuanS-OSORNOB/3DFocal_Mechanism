@@ -16,6 +16,7 @@ def load_events(filename, **kwargs):
     Keyword arguments:
         filetype: 'excel' or None. If 'excel', uses pandas.read_excel; otherwise, uses pandas.read_csv.
         projection: 'equirectangular'. (This exists for future expansion; equirectangular projection is the only option at this time)
+        usecols: List of integers (default range(4)). Indicates which columns to use, and in what order.
     This function uses pandas.read_csv or pandas.read_excel to read the file. Please see the documentation 
     https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_csv.html and
     https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_excel.html for keyword arguments. '''
@@ -23,7 +24,7 @@ def load_events(filename, **kwargs):
     projection = kwargs.pop('projection', 'equirectangular')
     if 'usecols' not in kwargs:
         kwargs['usecols'] = range(4)
-    data = load_data(filename, **kwargs)
+    data, kwargs = load_data(filename, **kwargs)
     colnames = data.columns.tolist()[4:]
     data = zip(*[data[col] for col in data])
     events = [Event(*parameters, projection = projection, colnames = colnames) for parameters in data]
@@ -41,19 +42,19 @@ def load_fms(filename, **kwargs):
         filetype: 'excel' or None. If 'excel', uses pandas.read_excel; otherwise, uses pandas.read_csv.
         projection: 'equirectangular'. (This exists for future expansion; equirectangular projection is the only option at this time)
         in_degrees: True or False. If True, indicates that the strike, dip, and rake are in degrees. If False, they are in radians.
-        columns: List of integers (default range(7)). Indicates which columns to use, and in what order.
+        usecols: List of integers (default range(7)). Indicates which columns to use, and in what order.
     This function uses pandas.read_csv or pandas.read_excel to read the file. Please see the documentation 
     https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_csv.html and
     https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_excel.html for keyword arguments. '''
 
-    projection = kwargs.pop('projection', 'equirectangular')
-    in_degrees = kwargs.pop('in_degrees', True)
+    # projection = kwargs.pop('projection', 'equirectangular')
+    # in_degrees = kwargs.pop('in_degrees', True)
     if 'usecols' not in kwargs:
         kwargs['usecols'] = range(7)
-    data = load_data(filename, **kwargs)
+    data, kwargs = load_data(filename, **kwargs)
     colnames = data.columns.tolist()[7:]
     data = zip(*[data[col] for col in data])
 
-    fms = [FocalMechanism(*parameters, projection = projection, in_degrees = in_degrees, colnames = colnames) for parameters in data]
+    fms = [FocalMechanism(*parameters, colnames = colnames, **kwargs) for parameters in data]
     return fms
 
