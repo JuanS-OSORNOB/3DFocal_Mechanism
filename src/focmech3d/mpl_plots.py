@@ -3,15 +3,27 @@
 # (c) <Juan Sebastián Osorno Bolívar & Amy Teegarden>
 import numpy as np
 from focmech3d.plotcoords import circle_arc, translate_and_scale, fm_points
-from focmech3d.vector_math import remove_top
+from focmech3d.vector_math import remove_top, get_data_limits
+
+
 
 def generate_scale_factors(focalmechanisms, ax):
 	'''plot everything else before running this function, or the axis limits
 	may change and the focal mechanisms may not look spherical.'''
+
+	minx, maxx, miny, maxy, minz, maxz = get_data_limits(focalmechanisms)
+
+	#use a temporary artist to get matplotlib to resize axes
+	temp_artist = ax.scatter([minx, maxx], [miny, maxy], [minz, maxz])
 	xaxis = ax.get_xlim()
 	yaxis = ax.get_ylim()
 	zaxis = ax.get_zbound()
+	temp_artist.remove()
 
+	#use set_xlim, etc., so axes stay at this bound.
+	ax.set_xlim(*xaxis)
+	ax.set_ylim(*yaxis)
+	ax.set_zlim(*zaxis)
 	#get minimum and maximum bounds for each axis
 	minx = min(xaxis)
 	maxx = max(xaxis)
@@ -21,33 +33,33 @@ def generate_scale_factors(focalmechanisms, ax):
 	maxz = max(zaxis)
 
 	
-	#check if beachballs would exceed current bounds and record new bounds
-	for fm in focalmechanisms:
-		center = fm.location
-		radius = fm.magnitude
-		if center[0] - radius < minx:
-			minx = center[0] - radius
-		if center[0] + radius > maxx:
-			maxx = center[0] + radius
-		if center[1] - radius < miny:
-			miny = center[1] - radius
-		if center[1] + radius > maxy:
-			maxy = center[1] + radius
-		if center[2] - radius < minz:
-			minz =  center[2] - radius
-		if center[2] + radius > maxz:
-			maxz = center[2] + radius
+	# #check if beachballs would exceed current bounds and record new bounds
+	# for fm in focalmechanisms:
+	# 	center = fm.location
+	# 	radius = fm.magnitude
+	# 	if center[0] - radius < minx:
+	# 		minx = center[0] - radius
+	# 	if center[0] + radius > maxx:
+	# 		maxx = center[0] + radius
+	# 	if center[1] - radius < miny:
+	# 		miny = center[1] - radius
+	# 	if center[1] + radius > maxy:
+	# 		maxy = center[1] + radius
+	# 	if center[2] - radius < minz:
+	# 		minz =  center[2] - radius
+	# 	if center[2] + radius > maxz:
+	# 		maxz = center[2] + radius
 
-	#actually set new bounds
-	if xaxis[0] > xaxis[1]: #axis is inverted
-		minx, maxx = maxx, minx
-	ax.set_xlim(minx, maxx)
-	if yaxis[0] > yaxis[1]:
-		miny, maxy = maxy, miny
-	ax.set_ylim(miny, maxy)
-	if zaxis[0] > zaxis[1]:
-		minz, maxz = maxz, minz
-	ax.set_zlim(minz, maxz)
+	# #actually set new bounds
+	# if xaxis[0] > xaxis[1]: #axis is inverted
+	# 	minx, maxx = maxx, minx
+	# ax.set_xlim(minx, maxx)
+	# if yaxis[0] > yaxis[1]:
+	# 	miny, maxy = maxy, miny
+	# ax.set_ylim(miny, maxy)
+	# if zaxis[0] > zaxis[1]:
+	# 	minz, maxz = maxz, minz
+	# ax.set_zlim(minz, maxz)
 
 
 	#calculate axis lengths and normalize by longest axis

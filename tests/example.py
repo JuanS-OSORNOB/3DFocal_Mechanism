@@ -58,13 +58,14 @@ def plot_test(test_data, lon, lat, depth):
 	ax.set_xlabel('Longitude (°)')
 	ax.set_ylabel('Latitude (°)')
 	ax.set_zlabel('Depth (km)')
-	ax.set_xlim(min(lon), max(lon))
-	ax.set_ylim(min(lat), max(lat))
-	ax.set_zlim(min(depth), max(depth))
+	# ax.set_xlim(min(lon), max(lon))
+	# ax.set_ylim(min(lat), max(lat))
+	# ax.set_zlim(min(depth), max(depth))
 	plot_focal_mechanisms(test_data, ax = ax, points = 20,
 						  vector_plots = ['strike', 'dip', 'rake', 'normal', 'B', 'P', 'T']
 						  , vector_colors = ['blue', 'green', 'brown', 'black', 'purple', 'gray', 'red'],
 						  print_vecs = True, bottom_half=False)
+	fig.savefig('new_example_plot1.png')
 
 	fig = plt.figure()
 	ax = fig.add_subplot(111, projection = '3d')
@@ -80,6 +81,7 @@ def plot_test(test_data, lon, lat, depth):
 						  , vector_colors = ['blue', 'green', 'brown', 'black', 'purple', 'gray', 'red'],
 						  bottom_half = True)
 	ax.view_init(90,270)
+	fig.savefig('new_example_plot2.png')
 '''If you would like to use the second nodal plane it is also possible. 
 Whichever you use can yield the correct 3D and stereonet plots, as nodal planes are perpendicular.'''
 strike2=df_FM['Strike 2'].values.tolist()
@@ -128,7 +130,8 @@ AREA2_FM=df_FM[df_FM['Area'].eq(2)]
 
 test_data = beachball_list
 plot_test(test_data, lon, lat, depth)
-plt.show()
-plt.close('all')
+# plt.show()
+# plt.close('all')
 
-
+print(compare_images('old_example_plot1.png', 'new_example_plot1.png', .01))
+print(compare_images('old_example_plot2.png', 'new_example_plot2.png', .01))
