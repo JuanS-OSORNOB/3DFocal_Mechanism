@@ -97,13 +97,13 @@ class test_event_profile(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         fig1, fig2 = example(depth_mag = True, verbose = False, show_plots = False)
-        fig1.savefig('tests/actual_images/3D Profile example.png')
-        fig2.savefig('tests/actual_images/Plot profile example.png')
+        fig1.savefig('tests/actual_images/3D_Profile_example.png')
+        fig2.savefig('tests/actual_images/Plot_profile_example.png')
     def test_3D_profile(self):
-        diff = compare_images('tests/expected_images/3D Profile example.png', 'tests/actual_images/3D Profile example.png', .01)
+        diff = compare_images('tests/expected_images/3D_Profile_example.png', 'tests/actual_images/3D_Profile_example.png', .01)
         self.assertIsNone(diff)
     def test_2D_profile(self):
-        diff = compare_images('tests/expected_images/Plot profile example.png', 'tests/actual_images/Plot profile example.png', .01)
+        diff = compare_images('tests/expected_images/Plot_profile_example.png', 'tests/actual_images/Plot_profile_example.png', .01)
         self.assertIsNone(diff)
 
 class test_basic_profile(imgTest):
