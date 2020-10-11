@@ -24,8 +24,9 @@ def load_events(filename, **kwargs):
     if 'usecols' not in kwargs:
         kwargs['usecols'] = range(4)
     data = load_data(filename, **kwargs)
+    colnames = data.columns.tolist()[4:]
     data = zip(*[data[col] for col in data])
-    events = [Event(*parameters, projection = projection) for parameters in data]
+    events = [Event(*parameters, projection = projection, colnames = colnames) for parameters in data]
     return events
 
 def load_fms(filename, **kwargs):
@@ -50,7 +51,9 @@ def load_fms(filename, **kwargs):
     if 'usecols' not in kwargs:
         kwargs['usecols'] = range(7)
     data = load_data(filename, **kwargs)
+    colnames = data.columns.tolist()[7:]
     data = zip(*[data[col] for col in data])
-    fms = [FocalMechanism(*parameters, projection = projection, in_degrees = in_degrees) for parameters in data]
+
+    fms = [FocalMechanism(*parameters, projection = projection, in_degrees = in_degrees, colnames = colnames) for parameters in data]
     return fms
 

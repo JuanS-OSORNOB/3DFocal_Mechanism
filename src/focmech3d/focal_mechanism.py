@@ -14,13 +14,17 @@ from focmech3d.plotcoords import fm_quadrant, fm_points, translate_and_scale
 from focmech3d.mpl_plots import plot_circle, plot_vector, generate_scale_factors, plot_focal_mechanism, get_data_limits
 
 class Event(object):
-	def __init__(self, longitude, latitude, altitude, magnitude, *other_params, projection = 'equirectangular', rad_function = lambda x: x):
+	def __init__(self, longitude, latitude, altitude, magnitude, *other_params, projection = 'equirectangular', rad_function = lambda x: x, colnames = []):
 		'''Rad function is a function that takes the magnitude and turns it into a focal mechanism radius. By default, the magnitude is simply the radius.'''
 		self.projection = projection
 		self.magnitude = magnitude
 		self.radius = rad_function(magnitude)
 		if projection == 'equirectangular':
 			self.location = self.equirectangular_projection(longitude, latitude, altitude)
+		if colnames:
+			self.other_params_dict = dict(zip(colnames, other_params))
+		elif other_params:
+			self.other_params = other_params
 	#There may be support for projections other than equirectangular in the future
 	def equirectangular_projection(self, longitude, latitude, altitude):
 		return (longitude, latitude, altitude)
@@ -43,7 +47,7 @@ class FocalMechanism(Event):
 	Strike is 0 to 360 degrees. Dip is 0 to 90 degrees. Rake is between -180 and 180 degrees.'''
 
 	def __init__(self, longitude, latitude, altitude, magnitude, strike, dip, rake, *other_params, projection = 'equirectangular', in_degrees = True,
-				rad_function = lambda x: x):
+				rad_function = lambda x: x, colnames = []):
 		super().__init__(longitude, latitude, altitude, magnitude, projection = projection, rad_function = rad_function)
 		if in_degrees:
 			if strike < 0 or strike > 360:
@@ -64,6 +68,10 @@ class FocalMechanism(Event):
 		self.dip = dip
 		self.rake = rake
 		self.vectors = self.calculate_vectors()
+		if colnames:
+			self.other_params_dict = dict(zip(colnames, other_params))
+		elif other_params:
+			self.other_params = other_params
 
 	def print_vectors(self):
 		'''Takes a dict of xyz vectors, prints the vector type, xyz vector, and plunge/bearing format.'''

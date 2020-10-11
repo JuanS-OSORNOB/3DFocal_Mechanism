@@ -58,9 +58,7 @@ def plot_test(test_data, lon, lat, depth):
 	ax.set_xlabel('Longitude (°)')
 	ax.set_ylabel('Latitude (°)')
 	ax.set_zlabel('Depth (km)')
-	# ax.set_xlim(min(lon), max(lon))
-	# ax.set_ylim(min(lat), max(lat))
-	# ax.set_zlim(min(depth), max(depth))
+
 	plot_focal_mechanisms(test_data, ax = ax, points = 20,
 						  vector_plots = ['strike', 'dip', 'rake', 'normal', 'B', 'P', 'T']
 						  , vector_colors = ['blue', 'green', 'brown', 'black', 'purple', 'gray', 'red'],
@@ -73,9 +71,7 @@ def plot_test(test_data, lon, lat, depth):
 	ax.set_xlabel('Longitude (°)')
 	ax.set_ylabel('Latitude (°)')
 	ax.set_zlabel('Depth (km)')
-	ax.set_xlim(min(lon), max(lon))
-	ax.set_ylim(min(lat), max(lat))
-	ax.set_zlim(min(depth), max(depth))
+
 	plot_focal_mechanisms(test_data, ax = ax, points = 20,
 						  vector_plots = ['strike', 'dip', 'rake', 'normal', 'B', 'P', 'T']
 						  , vector_colors = ['blue', 'green', 'brown', 'black', 'purple', 'gray', 'red'],
