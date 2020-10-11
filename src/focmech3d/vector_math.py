@@ -153,3 +153,16 @@ def vec_to_angles(vector):
 	if bearing<0:
 		bearing=360+bearing
 	return bearing, plunge
+
+def get_data_limits(focalmechanisms):
+	'''Returns the largest and smallest x, y, and z values of the locations of the focal mechanisms, +/- the radius.'''
+	centers = np.array([fm.location for fm in focalmechanisms]).T
+	radii = np.array([fm.radius for fm in focalmechanisms])
+	X, Y, Z = centers
+	minx = min(X - radii)
+	maxx = max(X + radii)
+	miny = min(Y - radii)
+	maxy = max(Y + radii)
+	minz = min(Z - radii)
+	maxz = max(Z + radii)
+	return minx, maxx, miny, maxy, minz, maxz
