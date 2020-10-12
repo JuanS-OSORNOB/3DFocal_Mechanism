@@ -9,7 +9,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-from focmech3d.vector_math import vec_to_angles, remove_top
+from focmech3d.vector_math import vec_to_angles, remove_top, angle_between
 from focmech3d.plotcoords import fm_quadrant, fm_points, translate_and_scale
 from focmech3d.mpl_plots import plot_circle, plot_vector, generate_scale_factors, plot_focal_mechanism, get_data_limits
 
@@ -160,6 +160,23 @@ class FocalMechanism(Event):
 				'B': null_vector,
 				'P': p_vector,
 				'T': t_vector}
+	
+	def aux_plane(self):
+		#still under testing; may not be correct
+		'''Returns strike, dip, and rake vectors for auxiliary plane.'''
+		strike = np.cross(np.array([0, 0, 1]), self.vectors['rake'])
+		dip = np.cross(strike, self.vectors['rake'])
+		return strike, dip, self.vectors['normal']
+		
+	def aux_plane_angles(self):
+		#still under testing; may not be correct
+		'''Returns angles (in degrees) for the auxiliary strike, dip, and rake'''
+		strike, dip, rake = self.aux_plane()
+		strike_angle, _ = vec_to_angles(strike)
+		_, dip_angle = vec_to_angles(dip)
+		rake_angle = degrees(angle_between(strike, rake))
+		return strike_angle, dip_angle, rake_angle
+
 
 def plot_focal_mechanisms(data_list, ax = None, in_degrees = True, in_fms = False, **kwargs):
 	'''kwargs:
