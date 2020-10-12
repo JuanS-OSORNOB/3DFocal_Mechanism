@@ -2,7 +2,7 @@
 # Last revised: 08/23/20
 # (c) <Juan Sebastián Osorno Bolívar & Amy Teegarden>
 import os, sys, inspect
-from math import radians, sin, cos, isclose, asin, atan2
+from math import radians, sin, cos, isclose, asin, atan2, degrees
 
 import numpy as np
 import pandas as pd
@@ -25,34 +25,15 @@ focalmechanismdir=readingfile(os.path.join(directory, 'FMS.xlsx'))
 def filepath(filename):
 	return os.path.join(directory, filename)
 def savefig(fig, filename):
-	fig.savefig(os.path.join(directory, filename))
+	fig.savefig(filepath(filename))
 
-data_FM = pd.read_excel(focalmechanismdir)
 
-df_FM=pd.DataFrame(data_FM, columns=['Longitude (°)', 'Latitude (°)', 'Depth (km)', 'Magnitude (Mw)', 'Strike 1', 'Dip 1', 'Rake 1', 'Strike 2', 'Dip 2', 'Rake 2', 'Area', 'Date'])
-
-mag_FM, lon, lat, depth, center_FM, nodal_plane1=[], [], [], [], [], []
-for i, row in df_FM.iterrows():
-		mag_FM.append(row['Magnitude (Mw)'])
-		x_FM=row['Longitude (°)']
-		y_FM=row['Latitude (°)']
-		z_FM=row['Depth (km)']*(-1)
-		s_FM=row['Strike 1']
-		d_FM=row['Dip 1']
-		r_FM=row['Rake 1']
-		lon.append(x_FM)
-		lat.append(y_FM)
-		depth.append(z_FM)
-		center_FM.append([x_FM, y_FM, z_FM])
-		nodal_plane1.append([s_FM, d_FM, r_FM])
-#Insert beachball list=[[R1, [X1,Y1,Z1], [S1, D1, R1]],[[R2, [X2,Y2,Z2], [S2, D2, R2]],...,[[Ri, [Xi,Yi,Zi], [Si, Di, Ri]]] from i=1 to n number of FMS.
-beachball_list=[]
-data_FM=load_fms(focalmechanismdir, filetype = 'excel', usecols = [4, 3, 13, 12, 5, 6, 7])
-for i in range(0,len(mag_FM)):
-	beachball_list.append([mag_FM[i], center_FM[i], nodal_plane1[i]])
+data_FM=load_fms(focalmechanismdir, filetype = 'excel', usecols = [4, 3, 13, 12, 5, 6, 7, 8, 9, 10, 14], invert_z = True)
 print('Total number of events:', len(data_FM))
 
-def plot_test(test_data, lon, lat, depth):
+
+
+def plot_test(test_data, view_init = [], filename = '', bottom_half = True):
 	fig = plt.figure()
 	ax = fig.add_subplot(111, projection = '3d')
 	ax.set_xlabel('Longitude (°)')
@@ -62,30 +43,17 @@ def plot_test(test_data, lon, lat, depth):
 	plot_focal_mechanisms(test_data, ax = ax, points = 20,
 						  vector_plots = ['strike', 'dip', 'rake', 'normal', 'B', 'P', 'T']
 						  , vector_colors = ['blue', 'green', 'brown', 'black', 'purple', 'gray', 'red'],
-						  print_vecs = True, bottom_half=False)
-	fig.savefig('new_example_plot1.png')
+						  print_vecs = True, bottom_half = bottom_half, in_fms = True)
+	if view_init:
+		ax.view_init(*view_init)
+	if filename:
+		savefig(fig, filename)
 
-	fig = plt.figure()
-	ax = fig.add_subplot(111, projection = '3d')
-	ax.view_init(90,270)
-	ax.set_xlabel('Longitude (°)')
-	ax.set_ylabel('Latitude (°)')
-	ax.set_zlabel('Depth (km)')
-
-	plot_focal_mechanisms(test_data, ax = ax, points = 20,
-						  vector_plots = ['strike', 'dip', 'rake', 'normal', 'B', 'P', 'T']
-						  , vector_colors = ['blue', 'green', 'brown', 'black', 'purple', 'gray', 'red'],
-						  bottom_half = True)
-	ax.view_init(90,270)
-	fig.savefig('new_example_plot2.png')
 '''If you would like to use the second nodal plane it is also possible. 
 Whichever you use can yield the correct 3D and stereonet plots, as nodal planes are perpendicular.'''
-strike2=df_FM['Strike 2'].values.tolist()
-dip2=df_FM['Dip 2'].values.tolist()
-rake2=df_FM['Rake 2'].values.tolist()
-nodal_plane2=[]
-for i in range(0, len(strike2)):
-	nodal_plane2.append((strike2[i], dip2[i], rake2[i]))
+
+nodal_plane1 = [[degrees(fm.strike), degrees(fm.dip), degrees(fm.rake)] for fm in data_FM]
+nodal_plane2 = [(fm.other_params_dict['Strike 2'], fm.other_params_dict['Dip 2'], fm.other_params_dict['Rake 2']) for fm in data_FM]
 
 def obtain_axes_list(plane):
 	bearing=[]
@@ -121,13 +89,21 @@ b_bearing2, b_plunge2, p_bearing2, p_plunge2, t_bearing2, t_plunge2=obtain_axes_
 #With these lists you can use the mplstereonet module to plot these axes on the stereonet
 
 '''Note: Area query in case it needs to be done'''
-AREA1_FM=df_FM[df_FM['Area'].eq(1)]
-AREA2_FM=df_FM[df_FM['Area'].eq(2)]
+AREA1 = []
+AREA2 = []
 
-test_data = beachball_list
-plot_test(test_data, lon, lat, depth)
+for fm in data_FM:
+	area = fm.other_params_dict['Area']
+	if area == 1:
+		AREA1.append(fm)
+	elif area == 2:
+		AREA2.append(fm)
+
+
+plot_test(data_FM, filename = 'example_plot1.png', bottom_half = False)
+plot_test(data_FM, view_init = (90, 270), filename = 'example_plot2.png')
 # plt.show()
 # plt.close('all')
 
-print(compare_images('old_example_plot1.png', 'new_example_plot1.png', .01))
-print(compare_images('old_example_plot2.png', 'new_example_plot2.png', .01))
+print(compare_images(filepath('old_example_plot1.png'), filepath('new_example_plot1.png'), .01))
+print(compare_images(filepath('old_example_plot2.png'), filepath('new_example_plot2.png'), .01))
