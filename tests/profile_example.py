@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 
-from focmech3d import load_fms
+from focmech3d import load_fms, generate_events_from_list
 from focmech3d.datautils import readingfile
 from focmech3d.topoprofile import profile_view, in_bounds, plot_profile, plot_bounding_box, pltcolor, pltsize
 from focmech3d.focal_mechanism import plot_focal_mechanisms
@@ -84,15 +84,17 @@ def example(depth_mag=True, verbose = True, show_plots = False):
 	for i in range(0, len(lon)):
 		Event_list.append([mag_events[i], center_Events[i]])
 	Events_in_bounds=in_bounds(Event_list, bounds, center, theta, rotated=False)
+	ev_in_bounds = [[*x[1], x[0]] for x in Events_in_bounds]
+
+	Events_in_bounds = generate_events_from_list(ev_in_bounds, invert_z = False)
 	
 	x_inbound, y_inbound, z_inbound, mag_inbound=[], [], [], []
-	for i in Events_in_bounds:
-		mag=i[0]
-		x, y, z=i[1]
+	for event in Events_in_bounds:
+		x, y, z=event.location
 		x_inbound.append(x)
 		y_inbound.append(y)
 		z_inbound.append(z)
-		mag_inbound.append(mag)
+		mag_inbound.append(event.radius)
 	col_inbounds=pltcolor(z_inbound)
 	size_inbounds=pltsize(mag_inbound)
 
