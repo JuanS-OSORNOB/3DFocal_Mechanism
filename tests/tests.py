@@ -163,12 +163,12 @@ class test_top_removed(imgTest):
 
 class test_load_data(unittest.TestCase):
     def test_col_order(self):
-        data, _ = load_data('tests/test_csv.csv', usecols = [0, 1, 2])
+        data = load_data('tests/test_csv.csv', usecols = [0, 1, 2])
         self.assertTrue(data.columns[0] == 'magnitude')
-        data, _ = load_data('tests/test_csv.csv', usecols = [2, 1, 0])
+        data = load_data('tests/test_csv.csv', usecols = [2, 1, 0])
         self.assertTrue(data.columns[0] == 'latitude')
     def test_delimiter(self):
-        data, _ = load_data('tests/test_csv_tab.csv', usecols = [0, 1, 2])
+        data = load_data('tests/test_csv_tab.csv', usecols = [0, 1, 2])
 
 
 

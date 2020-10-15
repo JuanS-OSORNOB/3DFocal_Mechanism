@@ -15,7 +15,7 @@ from focmech3d.mpl_plots import plot_circle, plot_vector, generate_scale_factors
 
 class Event(object):
 	def __init__(self, longitude, latitude, altitude, magnitude, *other_params, projection = 'equirectangular', rad_function = lambda x: x, colnames = [],
-	invert_z = False):
+	invert_z = True):
 		'''Rad function is a function that takes the magnitude and turns it into a focal mechanism radius. By default, the magnitude is simply the radius.'''
 		self.projection = projection
 		self.magnitude = magnitude
@@ -29,6 +29,11 @@ class Event(object):
 			self.other_params_dict = dict(zip(colnames, other_params))
 		elif other_params:
 			self.other_params = other_params
+	def check_same(self, other):
+		'''Checks if two Event objects have the same location and magnitude. Will still return True if the radius is different due to the 
+		rad_function being different or if there are different other_params.'''
+		return self.magnitude == other.magnitude and self.location == other.location
+
 	#There may be support for projections other than equirectangular in the future
 	def equirectangular_projection(self, longitude, latitude, altitude):
 		return (longitude, latitude, altitude)
@@ -52,7 +57,7 @@ class FocalMechanism(Event):
 	Strike is 0 to 360 degrees. Dip is 0 to 90 degrees. Rake is between -180 and 180 degrees.'''
 
 	def __init__(self, longitude, latitude, altitude, magnitude, strike, dip, rake, *other_params, projection = 'equirectangular', in_degrees = True,
-				rad_function = lambda x: x, colnames = [], invert_z = False):
+				rad_function = lambda x: x, colnames = [], invert_z = True):
 		super().__init__(longitude, latitude, altitude, magnitude, projection = projection, rad_function = rad_function, invert_z = invert_z)
 		if in_degrees:
 			if strike < 0 or strike > 360:
@@ -77,6 +82,13 @@ class FocalMechanism(Event):
 			self.other_params_dict = dict(zip(colnames, other_params))
 		elif other_params:
 			self.other_params = other_params
+
+	def check_same(self, other):
+		'''Checks if two FocalMechanism objects have the same location, magnitude, strike, dip, and rake. 
+		Will still return True if the radius is different due to the 
+		rad_function being different or if there are different other_params.'''
+		return (self.magnitude == other.magnitude and self.location == other.location and 
+		self.strike == other.strike and self.rake == other.rake and self.dip == other.dip)
 
 	def print_vectors(self):
 		'''Takes a dict of xyz vectors, prints the vector type, xyz vector, and plunge/bearing format.'''
@@ -178,7 +190,7 @@ class FocalMechanism(Event):
 		return strike_angle, dip_angle, rake_angle
 
 
-def plot_focal_mechanisms(data_list, ax = None, in_degrees = True, in_fms = False, **kwargs):
+def plot_focal_mechanisms(data_list, ax = None, in_degrees = True, in_fms = False, invert_z = True, **kwargs):
 	'''kwargs:
 			in_degrees: True or False (default True).
 				If True, strike, dip, and rake angles are given
@@ -202,7 +214,7 @@ def plot_focal_mechanisms(data_list, ax = None, in_degrees = True, in_fms = Fals
 	focalmechanisms = []
 	if in_fms == False:
 		for magnitude, location, angles in data_list:
-			focalmechanisms.append(FocalMechanism(*location, magnitude, *angles, in_degrees = in_degrees))
+			focalmechanisms.append(FocalMechanism(*location, magnitude, *angles, in_degrees = in_degrees, invert_z = invert_z))
 	else:
 		focalmechanisms = data_list
 

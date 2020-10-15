@@ -24,13 +24,14 @@ def load_events(filename, **kwargs):
     projection = kwargs.pop('projection', 'equirectangular')
     if 'usecols' not in kwargs:
         kwargs['usecols'] = range(4)
-    data, kwargs = load_data(filename, **kwargs)
+    data = load_data(filename, **kwargs)
     colnames = data.columns.tolist()[4:]
     data = zip(*[data[col] for col in data])
     events = [Event(*parameters, projection = projection, colnames = colnames) for parameters in data]
     return events
 
-def load_fms(filename, **kwargs):
+def load_fms(filename, projection = 'equirectangular', in_degrees = True, rad_function = lambda x: x, invert_z = True, 
+            filetype = None, usecols = None, sheet_name = 0, **kwargs):
     '''Creates an iterable of FocalMechanism objects by loading focal mechanism data and creating an FocalMechanism object from each line.
     The parameters longitude, latitude, altitude, magnitude, strike, dip, rake are loaded from the given file,
     in that order. By default, the first seven columns of the file are used. If you want 
@@ -49,12 +50,21 @@ def load_fms(filename, **kwargs):
 
     # projection = kwargs.pop('projection', 'equirectangular')
     # in_degrees = kwargs.pop('in_degrees', True)
-    if 'usecols' not in kwargs:
-        kwargs['usecols'] = range(7)
-    data, kwargs = load_data(filename, **kwargs)
+    if usecols is None:
+        usecols = range(7)
+    data = load_data(filename, usecols, filetype = filetype, sheet_name = sheet_name)
     colnames = data.columns.tolist()[7:]
     data = zip(*[data[col] for col in data])
 
-    fms = [FocalMechanism(*parameters, colnames = colnames, **kwargs) for parameters in data]
+    fms1 = [FocalMechanism(*parameters, colnames = colnames, **kwargs) for parameters in data]
+    fms2 = generate_fms_from_list(data, colnames = colnames, projection = projection)
     return fms
 
+def generate_fms_from_list(parameter_list, colnames = [], projection = 'equirectangular', 
+                            in_degrees = True, rad_function = lambda x: x, invert_z = True):
+    fms = []
+    for parameters in parameter_list:
+        fm = FocalMechanism(*parameters, colnames = colnames, projection = projection, in_degrees = in_degrees, 
+                            rad_function = rad_function, invert_z = invert_z)
+        fms.append(fm)
+    return fms
