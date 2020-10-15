@@ -42,7 +42,7 @@ class imgTest(unittest.TestCase):
                         [-5, 10, -8, 5, 280, 90, -30],
                         [5, -5, -10, 2, 90, 0, 100],
                         [20, 20, -10, 10, 359, 45, -100]]
-        cls.fms = [FocalMechanism(*data) for data in cls.data_list2]
+        cls.fms = [FocalMechanism(*data, invert_z = False) for data in cls.data_list2]
     def img_comp(self, fig, img_file, tolerance = .01):
         actual = act_img(img_file)
         fig.savefig(actual)
@@ -71,26 +71,27 @@ class test_single_fm(unittest.TestCase):
 class test_plot_multi(imgTest):
 
     def setUp(self):
-        self.data_list = [[1, [0, 0, -6], [0, 0, 0]],
-            [3, [-5, -5, -10], [10, 30, 40]],
-            [5, [-5, 10, -8], [280, 90, -30]],
-            [2, [5, -5, -10], [90, 0, 100]],
-            [10, [20, 20, -10], [359, 45, -100]]]
         self.data_list_rad = [[1, [0, 0, -6], [0, 0, 0]],
         [3, [-5, -5, -10], [10 * np.pi/180, 30 * np.pi/180, 40 * np.pi/180]],
         [5, [-5, 10, -8], [280 * np.pi/180, 90 * np.pi/180, -30 * np.pi/180]],
         [2, [5, -5, -10], [90 * np.pi/180, 0, 100 * np.pi/180]],
         [10, [20, 20, -10], [359 * np.pi/180, 45 * np.pi/180, -100 * np.pi/180]]]
+        self.data_list_rad = [[0, 0, -6, 1, 0, 0, 0], 
+            [-5, -5, -10, 3, 10 * np.pi/180, 30 * np.pi/180, 40 * np.pi/180],
+            [-5, 10, -8, 5, 280 * np.pi/180, 90 * np.pi/180, -30 * np.pi/180],
+            [5, -5, -10, 2, 90 * np.pi/180, 0, 100 * np.pi/180],
+            [20, 20, -10, 10, 359 * np.pi/180, 45 * np.pi/180, -100 * np.pi/180]]
+        self.rad_data =  [FocalMechanism(*data, invert_z = False, in_degrees = False) for data in self.data_list_rad]
         self.fig = plt.figure()
         self.ax = self.fig.add_subplot(111, projection = '3d')
 
     def test_radians(self):
-        plot_focal_mechanisms(self.data_list_rad, self.ax, in_degrees = False, alpha = .5)
+        plot_focal_mechanisms(self.rad_data, self.ax, in_fms = True, alpha = .5)
         self.img_comp(self.fig, 'rad_test.png', .1)
 
     def test_vectors(self):
-        plot_focal_mechanisms(self.data_list, self.ax, vector_plots = ['strike', 'dip', 'rake', 'normal', 'B', 'T', 'P'], vector_colors = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'black'],
-        alpha = .5)
+        plot_focal_mechanisms(self.fms, self.ax, vector_plots = ['strike', 'dip', 'rake', 'normal', 'B', 'T', 'P'], vector_colors = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'black'],
+        alpha = .5, in_fms = True)
         self.img_comp(self.fig, 'vector_test.png')
 
 class test_event_profile(unittest.TestCase):
@@ -162,12 +163,12 @@ class test_top_removed(imgTest):
 
 class test_load_data(unittest.TestCase):
     def test_col_order(self):
-        data = load_data('tests/test_csv.csv', usecols = [0, 1, 2])
+        data, _ = load_data('tests/test_csv.csv', usecols = [0, 1, 2])
         self.assertTrue(data.columns[0] == 'magnitude')
-        data = load_data('tests/test_csv.csv', usecols = [2, 1, 0])
+        data, _ = load_data('tests/test_csv.csv', usecols = [2, 1, 0])
         self.assertTrue(data.columns[0] == 'latitude')
     def test_delimiter(self):
-        data = load_data('tests/test_csv_tab.csv', usecols = [0, 1, 2])
+        data, _ = load_data('tests/test_csv_tab.csv', usecols = [0, 1, 2])
 
 
 
