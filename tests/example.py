@@ -43,7 +43,7 @@ def plot_test(test_data, view_init = [], filename = '', bottom_half = True):
 	plot_focal_mechanisms(test_data, ax = ax, points = 20,
 						  vector_plots = ['strike', 'dip', 'rake', 'normal', 'B', 'P', 'T']
 						  , vector_colors = ['blue', 'green', 'brown', 'black', 'purple', 'gray', 'red'],
-						  print_vecs = True, bottom_half = bottom_half, in_fms = True)
+						  bottom_half = bottom_half, in_fms = True)
 	if view_init:
 		ax.view_init(*view_init)
 	if filename:
@@ -54,6 +54,12 @@ Whichever you use can yield the correct 3D and stereonet plots, as nodal planes 
 
 nodal_plane1 = [[degrees(fm.strike), degrees(fm.dip), degrees(fm.rake)] for fm in data_FM]
 nodal_plane2 = [(fm.other_params_dict['Strike 2'], fm.other_params_dict['Dip 2'], fm.other_params_dict['Rake 2']) for fm in data_FM]
+
+test = data_FM[0]
+print(test.other_params_dict['Strike 2'])
+print(test.other_params_dict['Dip 2'])
+print(test.other_params_dict['Rake 2'])
+print(test.aux_plane_angles())
 
 def obtain_axes_list(plane):
 	bearing=[]

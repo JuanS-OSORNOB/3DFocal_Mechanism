@@ -9,6 +9,7 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 
+from focmech3d import load_fms
 from focmech3d.datautils import readingfile
 from focmech3d.topoprofile import profile_view, in_bounds, plot_profile, plot_bounding_box, pltcolor, pltsize
 from focmech3d.focal_mechanism import plot_focal_mechanisms
@@ -26,6 +27,7 @@ def example(depth_mag=True, verbose = True, show_plots = False):
 	data_FM=pd.read_excel(fm_file, sheet_name='FMS')
 	df_FM=pd.DataFrame(data_FM, columns=['Longitude (°)', 'Latitude (°)', 'Depth (km)', 'Magnitude (Mw)', 'Strike 1', 'Dip 1', 'Rake 1', 'Strike 2', 'Dip 2', 'Rake 2', 'Area', 'Date'])
 	
+	# data_FM=load_fms(data_FM, filetype = 'excel', usecols = [4, 3, 13, 12, 5, 6, 7, 8, 9, 10, 14], sheet_name = 'FMS', invert_z = True)
 	mag_FM, lon, lat, depth, center_FM, nodal_plane1=[], [], [], [], [], []
 	for i, row in df_FM.iterrows():
 			mag_FM.append(row['Magnitude (Mw)'])
@@ -60,7 +62,7 @@ def example(depth_mag=True, verbose = True, show_plots = False):
 	corners, bounds, theta, center, norm_vec = profile_view(*A, *Aprime, width, depth)
 	x_A, y_A, x_Aprime, y_Aprime=plot_bounding_box(ax, A, Aprime, corners, depth)
 	in_bounds_list=in_bounds(beachball_list, bounds, center, theta, rotated = False)
-	plot_focal_mechanisms(in_bounds_list, ax, alpha = 1)
+	plot_focal_mechanisms(in_bounds_list, ax, alpha = 1, invert_z = False)
 	#plot_focal_mechanisms(beachball_list, ax, alpha=0.5)
 
 	#Plot the events and the focal mechanisms inside profile volume
