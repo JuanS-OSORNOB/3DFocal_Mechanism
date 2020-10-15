@@ -166,3 +166,10 @@ def get_data_limits(focalmechanisms):
 	minz = min(Z - radii)
 	maxz = max(Z + radii)
 	return minx, maxx, miny, maxy, minz, maxz
+
+def arrayize(points_list):
+	'''Turns a list or tuple of xy pairs or xyz triples into two or three arrays.'''
+	vecs = []
+	for v in zip(*points_list):
+		vecs.append(np.array(v))
+	return vecs

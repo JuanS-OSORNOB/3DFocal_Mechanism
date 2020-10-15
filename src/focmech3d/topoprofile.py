@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 from focmech3d.focal_mechanism import plot_focal_mechanisms, plot_vector
-from focmech3d.vector_math import translate_rotate_point, normalize_vector, angle_between, circle_angle, vectors
+from focmech3d.vector_math import translate_rotate_point, normalize_vector, angle_between, circle_angle, vectors, arrayize
 from focmech3d.plotcoords import circle_arc
 from focmech3d.mpl_plots import generate_scale_factors
 
@@ -255,20 +255,13 @@ def in_bounds(data_list, bounds, center, theta, rotated = True):
 		newx, newy = translate_rotate_point(x, y, theta, center)
 		if xmin <= newx <= xmax and ymin <= newy <= ymax and zmin <= z <= zmax:
 			if rotated == True:
-				event = (newx, newy, event)
+				event = (newx, newy - ymin, event)
 			in_bounds_list.append(event)
 	return in_bounds_list
 
-def arrayize(points_list):
-	'''Turns a list or tuple of xy pairs or xyz triples into two or three arrays.'''
-	vecs = []
-	for v in zip(*points_list):
-		vecs.append(np.array(v))
-	return vecs
-
-def plot_lambert(ax, center, radius, scale_factors, zorder, *args):
+def plot_lambert(ax, center, radius, scale_factors, zorder, projection_point, new_y_axis, vecs):
 	zorder += 1
-	outer_circle, filled_area = lambert(*args)
+	outer_circle, filled_area = lambert(projection_point, new_y_axis, vecs)
 	X, Y = arrayize(outer_circle)
 	sc_x, sc_y = scale_factors
 	center_x, center_y = center
@@ -333,8 +326,10 @@ def plot_profile(FM_data_list, events_list, x1, y1, x2, y2, width, depth, fm_siz
 	#Beachball projection
 	original_corners, bounds, theta, center, norm_vec = profile_view(x1, y1, x2, y2, width, depth)
 	in_bounds_list = in_bounds(FM_data_list, bounds, center, theta)
+
 	if verbose:
 		print('Total FM in bounds:', len(in_bounds_list))
+
 	fig=plt.figure(dpi=220, tight_layout=True)
 	ax=fig.add_subplot(111)
 	plt.grid(which='major', axis='x', linestyle='--', alpha=0.5)
@@ -353,7 +348,7 @@ def plot_profile(FM_data_list, events_list, x1, y1, x2, y2, width, depth, fm_siz
 		_, x, event = in_bounds_list[i]
 		radius, center, angles = event
 		vecs = vectors(angles)
-		plot_lambert(ax, (x-ymin, center[2]), radius, scale_factors, i, norm_vec, np.array([0, 0, 1]), vecs)
+		plot_lambert(ax, (x, center[2]), radius, scale_factors, i, norm_vec, np.array([0, 0, 1]), vecs)
 
 	#Point profile
 	Event_list=in_bounds(events_list, bounds, center, theta)
@@ -374,7 +369,7 @@ def plot_profile(FM_data_list, events_list, x1, y1, x2, y2, width, depth, fm_siz
 		cols=pltcolor(depth_list)
 		size=pltsize(mag_list)
 		if depth_mag:
-			ax.scatter(newy-ymin, depth, c=cols[i], s=size[i])
+			ax.scatter(newy, depth, c=cols[i], s=size[i])
 		else:
-			ax.scatter(newy-ymin, depth, c='b', s=8)
+			ax.scatter(newy, depth, c='b', s=8)
 	return fig
