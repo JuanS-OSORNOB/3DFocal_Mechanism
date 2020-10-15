@@ -5,7 +5,8 @@
 from focmech3d.datautils import load_data
 from focmech3d.focal_mechanism import FocalMechanism, Event
 
-def load_events(filename, **kwargs):
+def load_events(filename, projection = 'equirectangular', rad_function = lambda x: x, 
+                invert_z = True, filetype = None, usecols = None, sheet_name = 0, colnames = None):
     '''Creates an iterable of Event objects by loading event data and creating an Event object from each line.
     The parameters longitude, latitude, altitude, magnitude are loaded from the given file,
     in that order. By default, the first four columns of the file are used. If you want 
@@ -20,18 +21,16 @@ def load_events(filename, **kwargs):
     This function uses pandas.read_csv or pandas.read_excel to read the file. Please see the documentation 
     https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_csv.html and
     https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_excel.html for keyword arguments. '''
-    
-    projection = kwargs.pop('projection', 'equirectangular')
-    if 'usecols' not in kwargs:
-        kwargs['usecols'] = range(4)
-    data = load_data(filename, **kwargs)
-    colnames = data.columns.tolist()[4:]
-    data = zip(*[data[col] for col in data])
-    events = [Event(*parameters, projection = projection, colnames = colnames) for parameters in data]
+
+    if 'usecols' is None:
+        usecols = range(4)
+    data = load_data(filename, usecols, filetype = filetype, sheet_name = sheet_name)
+    events = generate_events_from_dataframe(data, colnames = colnames, projection = projection, rad_function = rad_function,
+                                                        invert_z = invert_z)
     return events
 
 def load_fms(filename, projection = 'equirectangular', in_degrees = True, rad_function = lambda x: x, invert_z = True, 
-            filetype = None, usecols = None, sheet_name = 0, **kwargs):
+            filetype = None, usecols = None, sheet_name = 0, colnames = None):
     '''Creates an iterable of FocalMechanism objects by loading focal mechanism data and creating an FocalMechanism object from each line.
     The parameters longitude, latitude, altitude, magnitude, strike, dip, rake are loaded from the given file,
     in that order. By default, the first seven columns of the file are used. If you want 
@@ -48,23 +47,48 @@ def load_fms(filename, projection = 'equirectangular', in_degrees = True, rad_fu
     https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_csv.html and
     https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_excel.html for keyword arguments. '''
 
-    # projection = kwargs.pop('projection', 'equirectangular')
-    # in_degrees = kwargs.pop('in_degrees', True)
     if usecols is None:
         usecols = range(7)
     data = load_data(filename, usecols, filetype = filetype, sheet_name = sheet_name)
-    colnames = data.columns.tolist()[7:]
-    data = zip(*[data[col] for col in data])
-
-    fms = generate_fms_from_list(data, colnames = colnames, projection = projection, in_degrees = in_degrees, rad_function = rad_function,
-    invert_z = invert_z)
-    return fms
+    focal_mechanism_list = generate_fms_from_dataframe(data, colnames = colnames, projection = projection, in_degrees = in_degrees, rad_function = rad_function,
+                                                        invert_z = invert_z)
+    return focal_mechanism_list
 
 def generate_fms_from_list(parameter_list, colnames = [], projection = 'equirectangular', 
                             in_degrees = True, rad_function = lambda x: x, invert_z = True):
+    '''Use if you have a list of parameters that you want to use to generate the focal mechanisms. '''
     fms = []
     for parameters in parameter_list:
         fm = FocalMechanism(*parameters, colnames = colnames, projection = projection, in_degrees = in_degrees, 
                             rad_function = rad_function, invert_z = invert_z)
         fms.append(fm)
     return fms
+
+def generate_fms_from_dataframe(df, colnames = None, projection = 'equirectangular', 
+                                in_degrees = True, rad_function = lambda x: x, invert_z = True):
+    '''Use if you want to generate focal mechanisms from a DataFrame object.'''
+    if colnames is None:
+            colnames = df.columns.tolist()[7:]
+    data = zip(*[df[col] for col in df])
+    fms = generate_fms_from_list(data, colnames = colnames, projection = projection, in_degrees = in_degrees, rad_function = rad_function,
+    invert_z = invert_z)
+    return fms
+
+def generate_events_from_list(parameter_list, colnames = [], projection = 'equirectangular', 
+                            rad_function = lambda x: x, invert_z = True):
+    '''Use if you have a list of parameters that you want to use to generate the events. '''
+    events = []
+    for parameters in parameter_list:
+        event = Event(*parameters, colnames = colnames, projection = projection, 
+                            rad_function = rad_function, invert_z = invert_z)
+        events.append(event)
+    return events
+
+def generate_events_from_dataframe(df, colnames = None, projection = 'equirectangular', 
+                                rad_function = lambda x: x, invert_z = True):
+    '''Use if you want to generate events from a DataFrame object.'''
+    if colnames is None:
+            colnames = df.columns.tolist()[4:]
+    data = zip(*[df[col] for col in df])
+    events = generate_events_from_list(data, colnames = colnames, projection = projection, rad_function = rad_function, invert_z = invert_z)
+    return events

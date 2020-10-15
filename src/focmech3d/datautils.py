@@ -35,7 +35,7 @@ def load_data(filename, usecols, filetype = None, sep = None, sheet_name = 0):
 	#reorder columns
 	columns = sorted(usecols) #this is the order that Pandas put the columns in
 	if columns != usecols:
-		map_usecol_to_order = {col: num for num, col in enumerate(columns)} #which position the column number from kwargs['usecols'] is in
+		map_usecol_to_order = {col: num for num, col in enumerate(columns)} #which position the column number from usecols is in
 		new_ordering = [map_usecol_to_order[col] for col in usecols]
 		colnames = [df.columns[i] for i in new_ordering]
 		df = df[colnames]
