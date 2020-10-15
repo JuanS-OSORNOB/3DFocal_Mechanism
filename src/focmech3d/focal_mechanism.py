@@ -190,7 +190,8 @@ class FocalMechanism(Event):
 		return strike_angle, dip_angle, rake_angle
 
 
-def plot_focal_mechanisms(data_list, ax = None, in_degrees = True, in_fms = False, invert_z = True, **kwargs):
+def plot_focal_mechanisms(data_list, ax = None, in_degrees = True, in_fms = False, invert_z = True, vector_plots = [], vector_colors = [], 
+							bottom_half = False, points = 20, plot_planes = True, alpha = .75):
 	'''kwargs:
 			in_degrees: True or False (default True).
 				If True, strike, dip, and rake angles are given
@@ -220,10 +221,12 @@ def plot_focal_mechanisms(data_list, ax = None, in_degrees = True, in_fms = Fals
 
 	scale_factors = generate_scale_factors(focalmechanisms, ax)
 	for fm in focalmechanisms:
-		plot_focal_mechanism(fm, ax, scale_factors, **kwargs)
-	if 'vector_plots' in kwargs:
+		plot_focal_mechanism(fm, ax, scale_factors, vector_plots = vector_plots, vector_colors = vector_colors, bottom_half = bottom_half,
+								points = points, plot_planes = plot_planes, alpha = alpha)
+	if vector_plots:
+
 		#make proxy legend
-		for label, color in zip(kwargs['vector_plots'], kwargs['vector_colors']):
+		for label, color in zip(vector_plots, vector_colors):
 			ax.plot([], [], label = label, color = color)
 		plt.legend()
 	return ax

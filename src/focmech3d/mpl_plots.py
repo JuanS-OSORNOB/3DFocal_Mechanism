@@ -64,10 +64,9 @@ def plot_vector(radius, center, vec, ax, scale_factors, color):
 
 def plot_focal_mechanism(fm, ax, axis_ratios = [1, 1, 1], bottom_half = False,
 					plot_planes = True, vector_plots = [], vector_colors = [],
-					print_vecs = False, points = 20, **kwargs):
+					points = 20, alpha = .75, shade = True, linewidth = 0):
 	'''Plots a single focal mechanism on a given matplotlib Axes instance.'''
-	default_kwargs = {'alpha': .75, 'shade': True, 'linewidth': 0}
-	default_kwargs.update(kwargs)
+
 	radius = fm.magnitude
 	scale_factors = [radius * x for x in axis_ratios]
 	colors, quads = fm_points(fm, points)
@@ -80,7 +79,7 @@ def plot_focal_mechanism(fm, ax, axis_ratios = [1, 1, 1], bottom_half = False,
 		x, y, z = translate_and_scale(coords, fm.location, scale_factors)
 
 		# return x, y, z
-		ax.plot_surface(x, y, z, color=color, **default_kwargs)
+		ax.plot_surface(x, y, z, color=color, alpha = alpha, shade = shade, linewidth = linewidth)
 
 	if plot_planes:
 		plot_circle(fm, ax, axis_ratios)
