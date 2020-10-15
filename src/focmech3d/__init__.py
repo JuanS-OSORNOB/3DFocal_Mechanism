@@ -56,8 +56,8 @@ def load_fms(filename, projection = 'equirectangular', in_degrees = True, rad_fu
     colnames = data.columns.tolist()[7:]
     data = zip(*[data[col] for col in data])
 
-    fms1 = [FocalMechanism(*parameters, colnames = colnames, **kwargs) for parameters in data]
-    fms2 = generate_fms_from_list(data, colnames = colnames, projection = projection)
+    fms = generate_fms_from_list(data, colnames = colnames, projection = projection, in_degrees = in_degrees, rad_function = rad_function,
+    invert_z = invert_z)
     return fms
 
 def generate_fms_from_list(parameter_list, colnames = [], projection = 'equirectangular', 

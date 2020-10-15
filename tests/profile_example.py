@@ -27,7 +27,7 @@ def example(depth_mag=True, verbose = True, show_plots = False):
 	data_FM=pd.read_excel(fm_file, sheet_name='FMS')
 	df_FM=pd.DataFrame(data_FM, columns=['Longitude (°)', 'Latitude (°)', 'Depth (km)', 'Magnitude (Mw)', 'Strike 1', 'Dip 1', 'Rake 1', 'Strike 2', 'Dip 2', 'Rake 2', 'Area', 'Date'])
 	
-	# data_FM=load_fms(data_FM, filetype = 'excel', usecols = [4, 3, 13, 12, 5, 6, 7, 8, 9, 10, 14], sheet_name = 'FMS', invert_z = True)
+	data_FM=load_fms(fm_file, filetype = 'excel', usecols = [4, 3, 13, 12, 5, 6, 7, 8, 9, 10, 14], sheet_name = 'FMS', invert_z = True)
 	mag_FM, lon, lat, depth, center_FM, nodal_plane1=[], [], [], [], [], []
 	for i, row in df_FM.iterrows():
 			mag_FM.append(row['Magnitude (Mw)'])

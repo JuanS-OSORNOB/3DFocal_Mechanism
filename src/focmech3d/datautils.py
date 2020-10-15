@@ -21,7 +21,6 @@ def createpath(directory):
 def load_data(filename, usecols, filetype = None, sep = None, sheet_name = 0):
 	try:
 		if filetype == 'excel':
-			print(usecols)
 			df = pd.read_excel(filename, usecols = usecols, sheet_name = sheet_name)
 		elif sep is None:
 			df = pd.read_csv(filename, sep = None, engine = 'python', usecols = usecols)
