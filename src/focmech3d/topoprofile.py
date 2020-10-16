@@ -344,6 +344,8 @@ def plot_profile(FM_data_list, events_list, x1, y1, x2, y2, width, depth, fm_siz
 	in_bounds_list.sort() #first value was just for sorting back to front
 	fm_list = [[*fm[1], fm[0], *fm[2]] for _, _, fm in in_bounds_list]
 	fm_list = generate_fms_from_list(fm_list, invert_z = False)
+	ev_list = [[*ev[1], ev[0]] for _, _, ev in Event_list]
+	ev_list = generate_events_from_list(ev_list, invert_z = False, rad_function = radsize)
 	if verbose:
 		print('Total FM in bounds:', len(in_bounds_list))
 
@@ -368,21 +370,39 @@ def plot_profile(FM_data_list, events_list, x1, y1, x2, y2, width, depth, fm_siz
 
 	if verbose:
 		print('Total events:', len(events_list), '\nTotal events in bounds:', len(Event_list))
-	depth_list, mag_list=[], []
-	for i in range(0, len(Event_list)):
-		newx, newy, event=Event_list[i]
-		mag, center=event
-		_, _, depth=center
-		depth_list.append(depth)
-		mag_list.append(mag)
+	# X, Y, radii, colors =[], [], [], []
+	# for ev in ev_list:
+	# 	X.append(ev.location[1])
+	# 	depth = ev.location[2]
+	# 	Y.append(depth)
+	# 	if depth_mag:
+	# 		colors.append(pltcolor(depth))
+	# 		radii.append(ev.radius)
+	# 		radius = ev.radius
+	# 		color = pltcolor(depth)
+	# 	else:
+	# 		colors.append('b')
+	# 		radii.append(8)
+	# 		ax.scatter(ev.location[1], depth, c = color, s = radius)
+	# mag_list = []
+	# for i in range(0, len(Event_list)):
+	# 	newx, newy, event=Event_list[i]
+	# 	mag, center=event
+	# 	_, _, depth=center
+	# 	mag_list.append(mag)
 
-	for i in range(0, len(Event_list)):
-		newx, newy, event=Event_list[i]
-		mag, center=event
-		_, _, depth=center
-		size=pltsize(mag_list)
+	X, Y, radii, colors =[], [], [], []
+	for ev in ev_list:
+		_, x, depth=ev.location
+		mag = ev.magnitude
+		X.append(x)
+		Y.append(depth)
 		if depth_mag:
-			ax.scatter(newy, depth, c=pltcolor(depth), s=size[i])
+			radii.append(ev.radius)
+			colors.append(pltcolor(depth))
 		else:
-			ax.scatter(newy, depth, c='b', s=8)
+			radii.append(8)
+			colors.append('b')
+
+	ax.scatter(X, Y, c = colors, s = radii)
 	return fig
