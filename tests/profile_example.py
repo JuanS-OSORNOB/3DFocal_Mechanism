@@ -73,9 +73,7 @@ def example(depth_mag=True, verbose = True, show_plots = False):
 	lat=df_events['latitude'].values.tolist()
 	depth_events=df_events['depth'].values.tolist()
 	mag_events=df_events['mag'].values.tolist()
-	#cols_events=pltcolor(depth_events)
-	#size_events=pltsize(mag_events)
-	#ax.scatter(lon, lat, depth_events, c=cols_events, marker='.', alpha=0.01, edgecolor=cols_events, s=size_events, zorder=-1)	
+
 	
 	center_Events=[]
 	for i in range(0, len(lon)):
@@ -95,7 +93,7 @@ def example(depth_mag=True, verbose = True, show_plots = False):
 		y_inbound.append(y)
 		z_inbound.append(z)
 		mag_inbound.append(event.radius)
-	col_inbounds=pltcolor(z_inbound)
+	col_inbounds=[pltcolor(z)	 for z in z_inbound]
 	size_inbounds=pltsize(mag_inbound)
 
 	ax.view_init(0, -theta*180/np.pi)

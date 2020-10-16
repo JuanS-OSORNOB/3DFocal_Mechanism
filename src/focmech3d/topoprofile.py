@@ -256,7 +256,9 @@ def in_bounds(data_list, bounds, center, theta, rotated = True):
 		newx, newy = translate_rotate_point(x, y, theta, center)
 		if xmin <= newx <= xmax and ymin <= newy <= ymax and zmin <= z <= zmax:
 			if rotated == True:
-				event = (newx, newy - ymin, event)
+				new_event = event[:]
+				new_event[1] = [newx, newy - ymin, z]
+				event = (newx, newy - ymin, new_event)
 			in_bounds_list.append(event)
 	return in_bounds_list
 
@@ -272,20 +274,16 @@ def plot_lambert(ax, center, radius, scale_factors, zorder, projection_point, ne
 	ax.plot(X * sc_x * radius + center_x, Y * sc_y * radius + center[1], color = 'black', zorder = zorder * 2) 
 	ax.fill(X * sc_x * radius + center_x, Y * sc_y * radius + center[1], color = 'red', zorder = zorder * 2 - 1)
 
-def pltcolor(lst):
-	cols=[]
-	for l in lst:
-		if l>=-30 and l<0:
-			cols.append('red')
-		elif l>=-70 and l<-30:
-			cols.append('yellow')
-		elif l>=-120 and l<-70:
-			cols.append('springgreen')
-		elif l>=-180 and l<-120:
-			cols.append('dodgerblue')
-		else:
-			cols.append('b')
-	return cols
+def pltcolor(depth):
+	if -30 <= depth < 0:
+		return 'red'
+	if -70 <= depth < -30:
+		return 'yellow'
+	if -120 <= depth < -70:
+		return 'springgreen'
+	if -180 <= depth < -120:
+		return 'dodgerblue'
+	return 'b'
 
 def pltsize(lst):
 	init=8
@@ -327,6 +325,7 @@ def plot_profile(FM_data_list, events_list, x1, y1, x2, y2, width, depth, fm_siz
 	#Beachball projection
 	original_corners, bounds, theta, center, norm_vec = profile_view(x1, y1, x2, y2, width, depth)
 	in_bounds_list = in_bounds(FM_data_list, bounds, center, theta)
+	Event_list=in_bounds(events_list, bounds, center, theta)
 
 	if verbose:
 		print('Total FM in bounds:', len(in_bounds_list))
@@ -352,7 +351,7 @@ def plot_profile(FM_data_list, events_list, x1, y1, x2, y2, width, depth, fm_siz
 		plot_lambert(ax, (x, location[2]), radius, scale_factors, i, norm_vec, np.array([0, 0, 1]), vecs)
 
 	#Point profile
-	Event_list=in_bounds(events_list, bounds, center, theta)
+
 	if verbose:
 		print('Total events:', len(events_list), '\nTotal events in bounds:', len(Event_list))
 	depth_list, mag_list=[], []
@@ -367,10 +366,9 @@ def plot_profile(FM_data_list, events_list, x1, y1, x2, y2, width, depth, fm_siz
 		newx, newy, event=Event_list[i]
 		mag, center=event
 		_, _, depth=center
-		cols=pltcolor(depth_list)
 		size=pltsize(mag_list)
 		if depth_mag:
-			ax.scatter(newy, depth, c=cols[i], s=size[i])
+			ax.scatter(newy, depth, c=pltcolor(depth), s=size[i])
 		else:
 			ax.scatter(newy, depth, c='b', s=8)
 	return fig
