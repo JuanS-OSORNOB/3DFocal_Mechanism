@@ -258,12 +258,13 @@ def in_bounds(data_list, bounds, center, theta, rotated = True):
 			if rotated == True:
 				new_event = event[:]
 				new_event[1] = [newx, newy - ymin, z]
-				event = (newx, newy - ymin, new_event)
+				event = new_event
 			in_bounds_list.append(event)
 	return in_bounds_list
 
-def plot_lambert(ax, fm, radius, zorder, projection_point, new_y_axis):
+def plot_lambert(ax, fm, zorder, projection_point, new_y_axis):
 	vecs = fm.vectors
+	radius = fm.radius
 	zorder += 1
 	outer_circle, filled_area = lambert(projection_point, new_y_axis, vecs)
 	X, Y = arrayize(outer_circle)
@@ -325,6 +326,8 @@ def latlong_to_km(coords):
 	
 
 def plot_profile(FM_data_list, events_list, x1, y1, x2, y2, width, depth, fm_size = 1, depth_mag=True, in_degrees = True, verbose = True, Title = None):
+
+	#change to kilometers
 	if in_degrees:
 		x1 = gcs_degree_to_km(x1)
 		x2 = gcs_degree_to_km(x2)
@@ -341,10 +344,10 @@ def plot_profile(FM_data_list, events_list, x1, y1, x2, y2, width, depth, fm_siz
 	original_corners, bounds, theta, center, norm_vec = profile_view(x1, y1, x2, y2, width, depth)
 	in_bounds_list = in_bounds(FM_data_list, bounds, center, theta)
 	Event_list=in_bounds(events_list, bounds, center, theta)
-	in_bounds_list.sort() #first value was just for sorting back to front
-	fm_list = [[*fm[1], fm[0], *fm[2]] for _, _, fm in in_bounds_list]
+	fm_list = [[*fm[1], fm[0], *fm[2]] for fm in in_bounds_list]
 	fm_list = generate_fms_from_list(fm_list, invert_z = False, rad_function = lambda x: fm_size * x)
-	ev_list = [[*ev[1], ev[0]] for _, _, ev in Event_list]
+	fm_list = sorted(fm_list, key = lambda x: x.location[0])
+	ev_list = [[*ev[1], ev[0]] for ev in Event_list]
 	ev_list = generate_events_from_list(ev_list, invert_z = False, rad_function = radsize)
 	if verbose:
 		print('Total FM in bounds:', len(in_bounds_list))
@@ -358,19 +361,17 @@ def plot_profile(FM_data_list, events_list, x1, y1, x2, y2, width, depth, fm_siz
 	ax.set_xlabel('Relative profile distance (km)')
 	ax.set_ylabel('Depth (km)')
 	ax.set_aspect('equal')
-	#resize focal mechanisms based on fm_size -- allows the user to specify the radius (in km) of a magnitude 1 focal mechanism.
 	if Title:
 		ax.set_title(Title, fontsize=13)
 
 	for i, fm in enumerate(fm_list):
-		vecs = fm.vectors
-		plot_lambert(ax, fm, fm.radius, i, norm_vec, np.array([0, 0, 1]))
+		plot_lambert(ax, fm, i, norm_vec, np.array([0, 0, 1]))
 
 	#Point profile
 
 	if verbose:
 		print('Total events:', len(events_list), '\nTotal events in bounds:', len(Event_list))
-
+	#Plot the profile
 	X, Y, radii, colors =[], [], [], []
 	for ev in ev_list:
 		_, x, depth=ev.location
