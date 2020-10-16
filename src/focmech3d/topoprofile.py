@@ -324,7 +324,7 @@ def latlong_to_km(coords):
 	return [gcs_degree_to_km(coords[0]), gcs_degree_to_km(coords[1]), coords[2]]
 	
 
-def plot_profile(FM_data_list, events_list, x1, y1, x2, y2, width, depth, fm_size = 1, depth_mag=True, in_degrees = True, verbose = True, **kwargs):
+def plot_profile(FM_data_list, events_list, x1, y1, x2, y2, width, depth, fm_size = 1, depth_mag=True, in_degrees = True, verbose = True, Title = None):
 	if in_degrees:
 		x1 = gcs_degree_to_km(x1)
 		x2 = gcs_degree_to_km(x2)
@@ -343,7 +343,7 @@ def plot_profile(FM_data_list, events_list, x1, y1, x2, y2, width, depth, fm_siz
 	Event_list=in_bounds(events_list, bounds, center, theta)
 	in_bounds_list.sort() #first value was just for sorting back to front
 	fm_list = [[*fm[1], fm[0], *fm[2]] for _, _, fm in in_bounds_list]
-	fm_list = generate_fms_from_list(fm_list, invert_z = False)
+	fm_list = generate_fms_from_list(fm_list, invert_z = False, rad_function = lambda x: fm_size * x)
 	ev_list = [[*ev[1], ev[0]] for _, _, ev in Event_list]
 	ev_list = generate_events_from_list(ev_list, invert_z = False, rad_function = radsize)
 	if verbose:
@@ -359,42 +359,21 @@ def plot_profile(FM_data_list, events_list, x1, y1, x2, y2, width, depth, fm_siz
 	ax.set_ylabel('Depth (km)')
 	ax.set_aspect('equal')
 	#resize focal mechanisms based on fm_size -- allows the user to specify the radius (in km) of a magnitude 1 focal mechanism.
-	if 'Title' in kwargs:
-		ax.set_title(kwargs['Title'], fontsize=13)
+	if Title:
+		ax.set_title(Title, fontsize=13)
 
 	for i, fm in enumerate(fm_list):
 		vecs = fm.vectors
-		plot_lambert(ax, fm, fm.radius * fm_size, i, norm_vec, np.array([0, 0, 1]))
+		plot_lambert(ax, fm, fm.radius, i, norm_vec, np.array([0, 0, 1]))
 
 	#Point profile
 
 	if verbose:
 		print('Total events:', len(events_list), '\nTotal events in bounds:', len(Event_list))
-	# X, Y, radii, colors =[], [], [], []
-	# for ev in ev_list:
-	# 	X.append(ev.location[1])
-	# 	depth = ev.location[2]
-	# 	Y.append(depth)
-	# 	if depth_mag:
-	# 		colors.append(pltcolor(depth))
-	# 		radii.append(ev.radius)
-	# 		radius = ev.radius
-	# 		color = pltcolor(depth)
-	# 	else:
-	# 		colors.append('b')
-	# 		radii.append(8)
-	# 		ax.scatter(ev.location[1], depth, c = color, s = radius)
-	# mag_list = []
-	# for i in range(0, len(Event_list)):
-	# 	newx, newy, event=Event_list[i]
-	# 	mag, center=event
-	# 	_, _, depth=center
-	# 	mag_list.append(mag)
 
 	X, Y, radii, colors =[], [], [], []
 	for ev in ev_list:
 		_, x, depth=ev.location
-		mag = ev.magnitude
 		X.append(x)
 		Y.append(depth)
 		if depth_mag:
