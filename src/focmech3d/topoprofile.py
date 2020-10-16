@@ -262,16 +262,18 @@ def in_bounds(data_list, bounds, center, theta, rotated = True):
 			in_bounds_list.append(event)
 	return in_bounds_list
 
-def plot_lambert(ax, center, radius, zorder, projection_point, new_y_axis, vecs):
+def plot_lambert(ax, fm, radius, zorder, projection_point, new_y_axis):
+	vecs = fm.vectors
 	zorder += 1
 	outer_circle, filled_area = lambert(projection_point, new_y_axis, vecs)
 	X, Y = arrayize(outer_circle)
-	center_x, center_y = center
-	ax.plot(X * radius + center_x, Y * radius + center[1], color = 'black', zorder = zorder * 2) 
-	ax.fill(X * radius + center_x, Y * radius + center[1], color = 'white', zorder = zorder * 2 - 1)
+	center_x = fm.location[1]
+	center_y = fm.location[2]
+	ax.plot(X * radius + center_x, Y * radius + center_y, color = 'black', zorder = zorder * 2) 
+	ax.fill(X * radius + center_x, Y * radius + center_y, color = 'white', zorder = zorder * 2 - 1)
 	X, Y = arrayize(filled_area) 
-	ax.plot(X * radius + center_x, Y * radius + center[1], color = 'black', zorder = zorder * 2) 
-	ax.fill(X * radius + center_x, Y * radius + center[1], color = 'red', zorder = zorder * 2 - 1)
+	ax.plot(X * radius + center_x, Y * radius + center_y, color = 'black', zorder = zorder * 2) 
+	ax.fill(X * radius + center_x, Y * radius + center_y, color = 'red', zorder = zorder * 2 - 1)
 
 def pltcolor(depth):
 	if -30 <= depth < 0:
@@ -283,6 +285,20 @@ def pltcolor(depth):
 	if -180 <= depth < -120:
 		return 'dodgerblue'
 	return 'b'
+
+def radsize(magnitude):
+	base = 8
+	if 0 <= magnitude <= 3:
+		return base
+	if 3 < magnitude <= 4:
+		return base ** 2
+	if 4 < magnitude <= 5:
+		return base ** 2.5
+	if 5 < magnitude <= 6:
+		return base ** 3
+	if magnitude > 6:
+		return base ** 3.5
+	raise Exception(magnitude, 'is out of range.')
 
 def pltsize(lst):
 	init=8
@@ -346,7 +362,7 @@ def plot_profile(FM_data_list, events_list, x1, y1, x2, y2, width, depth, fm_siz
 
 	for i, fm in enumerate(fm_list):
 		vecs = fm.vectors
-		plot_lambert(ax, (fm.location[1], fm.location[2]), fm.radius * fm_size, i, norm_vec, np.array([0, 0, 1]), vecs)
+		plot_lambert(ax, fm, fm.radius * fm_size, i, norm_vec, np.array([0, 0, 1]))
 
 	#Point profile
 
