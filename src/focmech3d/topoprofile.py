@@ -9,6 +9,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 import pandas as pd
 
+from focmech3d import generate_events_from_list, generate_fms_from_list
 from focmech3d.focal_mechanism import plot_focal_mechanisms, plot_vector
 from focmech3d.vector_math import translate_rotate_point, normalize_vector, angle_between, circle_angle, vectors, arrayize
 from focmech3d.plotcoords import circle_arc
@@ -346,9 +347,9 @@ def plot_profile(FM_data_list, events_list, x1, y1, x2, y2, width, depth, fm_siz
 	in_bounds_list.sort() #first value was just for sorting back to front
 	for i in range(len(in_bounds_list)):
 		_, x, event = in_bounds_list[i]
-		radius, center, angles = event
+		radius, location, angles = event
 		vecs = vectors(angles)
-		plot_lambert(ax, (x, center[2]), radius, scale_factors, i, norm_vec, np.array([0, 0, 1]), vecs)
+		plot_lambert(ax, (x, location[2]), radius, scale_factors, i, norm_vec, np.array([0, 0, 1]), vecs)
 
 	#Point profile
 	Event_list=in_bounds(events_list, bounds, center, theta)
@@ -358,14 +359,14 @@ def plot_profile(FM_data_list, events_list, x1, y1, x2, y2, width, depth, fm_siz
 	for i in range(0, len(Event_list)):
 		newx, newy, event=Event_list[i]
 		mag, center=event
-		lon,lat, depth=center
+		_, _, depth=center
 		depth_list.append(depth)
 		mag_list.append(mag)
 
 	for i in range(0, len(Event_list)):
 		newx, newy, event=Event_list[i]
 		mag, center=event
-		lon, lat, depth=center
+		_, _, depth=center
 		cols=pltcolor(depth_list)
 		size=pltsize(mag_list)
 		if depth_mag:
