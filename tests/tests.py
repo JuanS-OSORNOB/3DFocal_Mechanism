@@ -109,7 +109,7 @@ class test_event_profile(unittest.TestCase):
 
 class test_basic_profile(imgTest):
     def test_profile1(self):
-        fig = plot_profile(self.data_list, [], -10, -10, 50, 50, 20, 40, in_degrees = False, verbose = False)
+        fig = plot_profile(self.fms, [], -10, -10, 50, 50, 20, 40, in_degrees = False, verbose = False, in_fms = True)
         self.img_comp(fig, 'basic_profile1.png')
     def test_profile2(self):
         fig = plot_profile(self.data_list, [],  50, 50, -10, -10, 20, 40, in_degrees = False, verbose = False)

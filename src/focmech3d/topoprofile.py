@@ -3,6 +3,7 @@
 # (c) <Juan Sebastián Osorno Bolívar & Amy Teegarden>
 from math import isclose, atan2, sqrt
 import os, sys
+from copy import deepcopy
 
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -240,7 +241,7 @@ def plot_bounding_box(ax, A, Aprime, corners, depth):
 	ax.plot(*zip(*five_lower_corners), c='k', linestyle='dashed')
 	return x_A, y_A, x_Aprime, y_Aprime
 
-def in_bounds(data_list, bounds, center, theta, rotated = True):
+def in_bounds(data_list, bounds, center, theta, rotated = True, in_fms = False):
 	'''Determines if the center points in data_list are within the bounds of a 3D bounding box whose upper face has center at 'center',
 	 whose y-axis is rotated theta radians clockwise from the absolute y-axis, and which has the bounds listed in 'bounds'.
 	 
@@ -252,13 +253,20 @@ def in_bounds(data_list, bounds, center, theta, rotated = True):
 
 	xmin, xmax, ymin, ymax, zmin, zmax = bounds
 	for event in data_list:
-		x, y, z = event[1]
+		#temporary code to deal with conversion
+		if in_fms:
+			x, y, z = event.location
+		else:
+			x, y, z = event[1]
 		newx, newy = translate_rotate_point(x, y, theta, center)
 		if xmin <= newx <= xmax and ymin <= newy <= ymax and zmin <= z <= zmax:
 			if rotated == True:
-				new_event = event[:]
-				new_event[1] = [newx, newy - ymin, z]
-				event = new_event
+				event = deepcopy(event)
+				#temporary code for dealing with conversion to objects
+				if in_fms:
+					event.location = [newx, newy - ymin, z]
+				else:
+					event[1] = [newx, newy - ymin, z]
 			in_bounds_list.append(event)
 	return in_bounds_list
 
@@ -325,7 +333,8 @@ def latlong_to_km(coords):
 	return [gcs_degree_to_km(coords[0]), gcs_degree_to_km(coords[1]), coords[2]]
 	
 
-def plot_profile(FM_data_list, events_list, x1, y1, x2, y2, width, depth, fm_size = 1, depth_mag=True, in_degrees = True, verbose = True, Title = None):
+def plot_profile(FM_data_list, events_list, x1, y1, x2, y2, width, depth, fm_size = 1, depth_mag=True, in_degrees = True, verbose = True, Title = None,
+					in_fms = False):
 
 	#change to kilometers
 	if in_degrees:
@@ -334,21 +343,51 @@ def plot_profile(FM_data_list, events_list, x1, y1, x2, y2, width, depth, fm_siz
 		y1 = gcs_degree_to_km(y1)
 		y2 = gcs_degree_to_km(y2)
 		width = gcs_degree_to_km(width)
+		updated_fms = []
+		updated_events = []
 		for data in FM_data_list:
-			data[1] = latlong_to_km(data[1])
+			#temporary code 
+			if in_fms:
+				loc = data.location
+			else:
+				loc = data[1]
+			loc = latlong_to_km(loc)
+			data = deepcopy(data)
+			if in_fms:
+				data.location = loc
+			else:
+				data[1] = loc
+			updated_fms.append(data)
 		for data in events_list:
-			data[1] = latlong_to_km(data[1])
+			if in_fms:
+				loc = data.location
+			else:
+				loc = data[1]
+			loc = latlong_to_km(loc)
+			data = deepcopy(data)
+			if in_fms:
+				data.location = loc
+			else:
+				data[1] = loc
+			updated_events.append(data)
+		FM_data_list = updated_fms
+		events_list = updated_events
 
 
 	#Beachball projection
 	original_corners, bounds, theta, center, norm_vec = profile_view(x1, y1, x2, y2, width, depth)
-	in_bounds_list = in_bounds(FM_data_list, bounds, center, theta)
-	Event_list=in_bounds(events_list, bounds, center, theta)
-	fm_list = [[*fm[1], fm[0], *fm[2]] for fm in in_bounds_list]
-	fm_list = generate_fms_from_list(fm_list, invert_z = False, rad_function = lambda x: fm_size * x)
-	fm_list = sorted(fm_list, key = lambda x: x.location[0])
-	ev_list = [[*ev[1], ev[0]] for ev in Event_list]
-	ev_list = generate_events_from_list(ev_list, invert_z = False, rad_function = radsize)
+	in_bounds_list = in_bounds(FM_data_list, bounds, center, theta, in_fms = in_fms)
+	Event_list=in_bounds(events_list, bounds, center, theta, in_fms = in_fms)
+
+	if in_fms:
+		fm_list = in_bounds_list
+		ev_list = Event_list
+	else:
+		fm_list = [[*fm[1], fm[0], *fm[2]] for fm in in_bounds_list]
+		fm_list = generate_fms_from_list(fm_list, invert_z = False, rad_function = lambda x: fm_size * x)
+		fm_list = sorted(fm_list, key = lambda x: x.location[0])
+		ev_list = [[*ev[1], ev[0]] for ev in Event_list]
+		ev_list = generate_events_from_list(ev_list, invert_z = False, rad_function = radsize)
 	if verbose:
 		print('Total FM in bounds:', len(in_bounds_list))
 
@@ -361,6 +400,8 @@ def plot_profile(FM_data_list, events_list, x1, y1, x2, y2, width, depth, fm_siz
 	ax.set_xlabel('Relative profile distance (km)')
 	ax.set_ylabel('Depth (km)')
 	ax.set_aspect('equal')
+	#make sure the grid lines are in front of the data
+	ax.xaxis.set_zorder(len(ev_list) + len(fm_list) * 2 + 10)
 	if Title:
 		ax.set_title(Title, fontsize=13)
 
