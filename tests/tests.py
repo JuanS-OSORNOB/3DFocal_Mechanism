@@ -6,6 +6,7 @@ import os
 import unittest
 import re
 import inspect
+from copy import copy
 
 from matplotlib import pyplot as plt
 from matplotlib.testing.compare import compare_images
@@ -112,11 +113,18 @@ class test_basic_profile(imgTest):
         fig = plot_profile(self.fms, [], -10, -10, 50, 50, 20, 40, in_degrees = False, verbose = False, in_fms = True)
         self.img_comp(fig, 'basic_profile1.png')
     def test_profile2(self):
-        fig = plot_profile(self.data_list, [],  50, 50, -10, -10, 20, 40, in_degrees = False, verbose = False)
+        fig = plot_profile(self.fms, [],  50, 50, -10, -10, 20, 40, in_degrees = False, verbose = False, in_fms = True)
         self.img_comp(fig, 'basic_profile2.png')
         fig.savefig('tests/actual_images/basic_profile2.png')
     def test_profile3(self):
-        fig = plot_profile(self.data_list, [], -10, 10, 25, 25, 20, 500, in_degrees = True, fm_size = 20, verbose = False)
+        bigger_fms = []
+        for fm in self.fms:
+            fm = copy(fm)
+            fm.rad_function = lambda x: 20 * x
+            fm.radius = fm.radius * 20
+            bigger_fms.append(fm)
+
+        fig = plot_profile(bigger_fms, [], -10, 10, 25, 25, 20, 500, in_degrees = True, fm_size = 20, verbose = False, in_fms = True)
         self.img_comp(fig, 'basic_profile3.png')
 
 class test_coords(unittest.TestCase):

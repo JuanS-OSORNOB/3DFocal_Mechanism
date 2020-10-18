@@ -2,7 +2,7 @@ import os
 import unittest
 import numpy as np
 import re
-
+from copy import copy
 
 from matplotlib import pyplot as plt
 from matplotlib.testing.compare import compare_images
@@ -55,10 +55,16 @@ fig.savefig('/home/amy/3DFocal_Mechanism/tests/expected_images/top_removed1.png'
 ax.view_init(90, 270)
 fig.savefig('/home/amy/3DFocal_Mechanism/tests/expected_images/top_removed2.png')
 
+big_focal_mechanisms = []
+for fm in focal_mechanisms:
+        fm = copy(fm)
+        fm.radius = 20 * fm.radius
+        fm.rad_function = lambda x: 20 * x
+        big_focal_mechanisms.append(fm)
 
-fig1 = plot_profile(data_list_old, [], -10, -10, 50, 50, 20, 40, in_degrees = False, verbose = False)
-fig2 = plot_profile(data_list_old, [],  50, 50, -10, -10, 20, 40, in_degrees = False, verbose = False)
-fig3 = plot_profile(data_list_old, [], -10, 10, 25, 25, 20, 500, in_degrees = True, fm_size = 20, verbose = False)
+fig1 = plot_profile(focal_mechanisms, [], -10, -10, 50, 50, 20, 40, in_degrees = False, verbose = False, in_fms = True)
+fig2 = plot_profile(focal_mechanisms, [],  50, 50, -10, -10, 20, 40, in_degrees = False, verbose = False, in_fms = True)
+fig3 = plot_profile(big_focal_mechanisms, [], -10, 10, 25, 25, 20, 500, in_degrees = True, fm_size = 20, verbose = False, in_fms = True)
 
 fig1.savefig('/home/amy/3DFocal_Mechanism/tests/expected_images/basic_profile1.png')
 fig2.savefig('/home/amy/3DFocal_Mechanism/tests/expected_images/basic_profile2.png')

@@ -385,9 +385,10 @@ def plot_profile(FM_data_list, events_list, x1, y1, x2, y2, width, depth, fm_siz
 	else:
 		fm_list = [[*fm[1], fm[0], *fm[2]] for fm in in_bounds_list]
 		fm_list = generate_fms_from_list(fm_list, invert_z = False, rad_function = lambda x: fm_size * x)
-		fm_list = sorted(fm_list, key = lambda x: x.location[0])
+		
 		ev_list = [[*ev[1], ev[0]] for ev in Event_list]
 		ev_list = generate_events_from_list(ev_list, invert_z = False, rad_function = radsize)
+	fm_list = sorted(fm_list, key = lambda x: x.location[0])
 	if verbose:
 		print('Total FM in bounds:', len(in_bounds_list))
 
