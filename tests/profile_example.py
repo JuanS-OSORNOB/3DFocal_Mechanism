@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 
-from focmech3d import load_fms, generate_events_from_list
+from focmech3d import load_fms, load_events, generate_events_from_list
 from focmech3d.datautils import readingfile
 from focmech3d.topoprofile import profile_view, in_bounds, plot_profile, plot_bounding_box, pltcolor, pltsize
 from focmech3d.focal_mechanism import plot_focal_mechanisms
@@ -73,7 +73,7 @@ def example(depth_mag=True, verbose = True, show_plots = False):
 	lat=df_events['latitude'].values.tolist()
 	depth_events=df_events['depth'].values.tolist()
 	mag_events=df_events['mag'].values.tolist()
-
+	events_list = load_events(ev_file, filetype = 'excel', usecols = [3, 2, 4, 5], invert_z = False)
 	
 	center_Events=[]
 	for i in range(0, len(lon)):
@@ -81,10 +81,9 @@ def example(depth_mag=True, verbose = True, show_plots = False):
 	Event_list=[]
 	for i in range(0, len(lon)):
 		Event_list.append([mag_events[i], center_Events[i]])
-	Events_in_bounds=in_bounds(Event_list, bounds, center, theta, rotated=False)
-	ev_in_bounds = [[*x[1], x[0]] for x in Events_in_bounds]
 
-	Events_in_bounds = generate_events_from_list(ev_in_bounds, invert_z = False)
+
+	Events_in_bounds=in_bounds(events_list, bounds, center, theta, rotated=False, in_fms = True)
 	
 	x_inbound, y_inbound, z_inbound, mag_inbound=[], [], [], []
 	for event in Events_in_bounds:
